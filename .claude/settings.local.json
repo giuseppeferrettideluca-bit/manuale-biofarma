@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Read(//Users/omast/.nvm/**)",
+      "Read(//Users/omast/.nodenv/**)",
+      "Read(//usr/local/**)",
+      "Bash(export PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\")",
+      "Bash(npm --version)",
+      "Bash(node server.js)",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@biofarma.it\",\"password\":\"Admin2026!\"}')",
+      "Bash(python3 -m json.tool)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(kill 2971)",
+      "Bash(open http://localhost:3001)",
+      "Bash(awk '/id=\"section-palletize\"/,/id=\"section-foreground\"/' /Users/omast/Desktop/manuale-biofarma/frontend/manuale.html)",
+      "Bash(git --version)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
