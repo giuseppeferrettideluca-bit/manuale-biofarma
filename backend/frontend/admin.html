@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Manuale SAP WM | Biofarma Group</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sap-blue: #0070f2;
+      --sap-blue-dark: #0040b0;
+      --bg-dark: #0a0e1a;
+      --bg-panel: #111827;
+      --bg-card: #161e2e;
+      --bg-hover: #1c2640;
+      --border: #1e2d4a;
+      --border-light: #2a3a5a;
+      --text-primary: #e8edf5;
+      --text-secondary: #8a9bbf;
+      --text-muted: #4a5a7a;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --sidebar-w: 240px;
+    }
+
+    body { font-family: Arial, Helvetica, sans-serif; background: var(--bg-dark); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Top bar ── */
+    .topbar {
+      height: 56px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; color: var(--text-primary);
+      text-decoration: none;
+    }
+    .topbar-brand .ico {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--sap-blue), var(--sap-blue-dark));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 14px; color: #fff;
+    }
+    .badge-admin {
+      background: rgba(0,112,242,0.15);
+      color: var(--sap-blue);
+      border: 1px solid rgba(0,112,242,0.3);
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-user {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #1a3a6a, #0070f2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; color: #fff;
+    }
+    .btn-logout {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      border-radius: 7px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--error); color: var(--error); }
+
+    /* ── Layout ── */
+    .layout { display: flex; flex: 1; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding: 8px 10px 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active { background: rgba(0,112,242,0.12); color: var(--sap-blue); font-weight: 600; }
+    .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+
+    /* ── Main content ── */
+    .main { flex: 1; padding: 28px; overflow-y: auto; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    h2.page-title {
+      font-size: 20px; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .page-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+
+    /* ── Stat cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); margin-bottom: 8px; }
+    .stat-value { font-size: 30px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+    .stat-desc { font-size: 11px; color: var(--text-secondary); margin-top: 6px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 22px;
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .card-head h3 { font-size: 15px; font-weight: 600; }
+    .card-head .card-action {
+      padding: 7px 14px;
+      background: var(--sap-blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .card-action:hover { opacity: 0.85; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    .td-nome { color: var(--text-primary); font-weight: 500; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-admin-r { background: rgba(0,112,242,0.15); color: var(--sap-blue); border: 1px solid rgba(0,112,242,0.25); }
+    .badge-user-r { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-inactive { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+
+    .btn-sm {
+      padding: 5px 11px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .btn-detail { background: rgba(0,112,242,0.1); color: var(--sap-blue); border-color: rgba(0,112,242,0.2); }
+    .btn-detail:hover { background: rgba(0,112,242,0.2); }
+    .btn-delete { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+    .btn-delete:hover { background: rgba(239,68,68,0.2); }
+    .btn-toggle { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.2); }
+    .btn-toggle:hover { background: rgba(245,158,11,0.2); }
+
+    /* ── Chart ── */
+    .chart-wrap { position: relative; height: 280px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-row input, .form-row select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+    }
+    .form-row input:focus, .form-row select:focus { border-color: var(--sap-blue); }
+    .form-row select option { background: var(--bg-card); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+    .btn-cancel {
+      padding: 9px 18px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-save {
+      padding: 9px 22px;
+      background: var(--sap-blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save:hover { opacity: 0.9; }
+
+    /* Dettaglio utente */
+    .detail-section { margin-bottom: 20px; }
+    .detail-section h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+    .loading { text-align: center; color: var(--text-muted); padding: 40px; font-size: 14px; }
+    .empty { text-align: center; color: var(--text-muted); padding: 32px; font-size: 13px; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+    .toast-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<header class="topbar">
+  <a href="/manuale" class="topbar-brand">
+    <div class="ico">B</div>
+    Biofarma Group
+  </a>
+  <span class="badge-admin">Admin</span>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <div class="avatar" id="avatarAdmin">A</div>
+    <span id="userNameAdmin">—</span>
+    <button class="btn-logout" id="btnLogoutAdmin">Esci</button>
+  </div>
+</header>
+
+<!-- Layout -->
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Pannello Admin</div>
+    <button class="nav-item active" data-page="dashboard">
+      <span class="icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" data-page="utenti">
+      <span class="icon">👥</span> Utenti
+    </button>
+    <button class="nav-item" data-page="statistiche">
+      <span class="icon">📈</span> Statistiche
+    </button>
+    <div style="flex:1"></div>
+    <button class="nav-item" onclick="window.location.href='/manuale'">
+      <span class="icon">📖</span> Vai al Manuale
+    </button>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- PAGE: Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <h2 class="page-title">Dashboard</h2>
+      <div class="page-sub">Panoramica utilizzo del Manuale SAP WM</div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Utenti totali</div>
+          <div class="stat-value" id="stat-utenti">—</div>
+          <div class="stat-desc">registrati nel sistema</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Utenti attivi</div>
+          <div class="stat-value" id="stat-attivi">—</div>
+          <div class="stat-desc">account abilitati</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Accessi 24h</div>
+          <div class="stat-value" id="stat-accessi">—</div>
+          <div class="stat-desc">nelle ultime 24 ore</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Sezioni tracciate</div>
+          <div class="stat-value" id="stat-sezioni">—</div>
+          <div class="stat-desc">sezioni distinte lette</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Accessi ultimi 30 giorni</h3></div>
+        <div class="chart-wrap"><canvas id="chartAccessi"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Sezioni più lette</h3></div>
+        <div class="chart-wrap"><canvas id="chartSezioni"></canvas></div>
+      </div>
+    </div>
+
+    <!-- PAGE: Utenti -->
+    <div class="page" id="page-utenti">
+      <h2 class="page-title">Gestione Utenti</h2>
+      <div class="page-sub">Aggiungi, modifica o disabilita gli utenti del portale</div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Lista utenti</h3>
+          <button class="card-action" id="btnNuovoUtente">+ Nuovo utente</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Ruolo</th>
+                <th>Stato</th>
+                <th>Ultima sessione</th>
+                <th>Sezioni lette</th>
+                <th>Tempo totale</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="tblUtenti"><tr><td colspan="8" class="loading">Caricamento…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: Statistiche -->
+    <div class="page" id="page-statistiche">
+      <h2 class="page-title">Statistiche di Lettura</h2>
+      <div class="page-sub">Analisi dettagliata per sezione del manuale</div>
+
+      <div class="card">
+        <div class="card-head"><h3>Sezioni per numero di visite</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Sezione</th>
+                <th>Visite totali</th>
+                <th>Utenti unici</th>
+                <th>Durata media</th>
+              </tr>
+            </thead>
+            <tbody id="tblSezioni"><tr><td colspan="5" class="loading">Caricamento…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal: Nuovo Utente -->
+<div class="modal-overlay" id="modalNuovoUtente">
+  <div class="modal">
+    <h3>Crea nuovo utente</h3>
+    <div class="form-row"><label>Nome completo</label><input type="text" id="nu-nome" placeholder="Mario Rossi"></div>
+    <div class="form-row"><label>Email</label><input type="email" id="nu-email" placeholder="mario.rossi@biofarma.it"></div>
+    <div class="form-row"><label>Password</label><input type="password" id="nu-password" placeholder="Min. 8 caratteri"></div>
+    <div class="form-row">
+      <label>Ruolo</label>
+      <select id="nu-ruolo">
+        <option value="user">Utente</option>
+        <option value="admin">Amministratore</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnCancelNuovo">Annulla</button>
+      <button class="btn-save" id="btnSalvaNuovo">Crea utente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Dettaglio Utente -->
+<div class="modal-overlay" id="modalDettaglio">
+  <div class="modal" style="max-width:580px">
+    <h3 id="dettaglio-title">Dettaglio utente</h3>
+    <div id="dettaglio-content"><div class="loading">Caricamento…</div></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnChiudiDettaglio">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+
+// ── Auth guard ──
+function getToken() { return localStorage.getItem('bf_token'); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('bf_user')); } catch { return null; } }
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+}
+
+const user = getUser();
+if (!user || user.ruolo !== 'admin') {
+  localStorage.clear();
+  window.location.href = '/';
+}
+
+document.getElementById('userNameAdmin').textContent = user.nome;
+document.getElementById('avatarAdmin').textContent = user.nome[0].toUpperCase();
+
+document.getElementById('btnLogoutAdmin').addEventListener('click', async () => {
+  await fetch(`${API}/auth/logout`, { method: 'POST', headers: authHeaders() });
+  localStorage.clear();
+  window.location.href = '/';
+});
+
+// ── Navigation ──
+document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    if (btn.dataset.page === 'dashboard') loadDashboard();
+    if (btn.dataset.page === 'utenti') loadUtenti();
+    if (btn.dataset.page === 'statistiche') loadStatistiche();
+  });
+});
+
+// ── Toast ──
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast toast-${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Helpers ──
+function formatDurata(sec) {
+  if (!sec) return '—';
+  if (sec < 60) return `${sec}s`;
+  if (sec < 3600) return `${Math.floor(sec/60)}m ${sec%60}s`;
+  return `${Math.floor(sec/3600)}h ${Math.floor((sec%3600)/60)}m`;
+}
+function formatDate(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── Dashboard ──
+let chartAccessi = null, chartSezioni = null;
+
+async function loadDashboard() {
+  const res = await fetch(`${API}/admin/statistiche`, { headers: authHeaders() });
+  if (!res.ok) return;
+  const data = await res.json();
+
+  document.getElementById('stat-utenti').textContent = data.totaleUtenti;
+  document.getElementById('stat-attivi').textContent = data.utentiAttivi;
+  document.getElementById('stat-accessi').textContent = data.accessiUltime24h;
+  document.getElementById('stat-sezioni').textContent = data.sezioniPopolare.length;
+
+  // Chart: accessi per giorno
+  const labels = data.accessiPerGiorno.map(r => r.giorno);
+  const values = data.accessiPerGiorno.map(r => r.accessi);
+  if (chartAccessi) chartAccessi.destroy();
+  chartAccessi = new Chart(document.getElementById('chartAccessi'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Accessi',
+        data: values,
+        borderColor: '#0070f2',
+        backgroundColor: 'rgba(0,112,242,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8a9bbf', font: { size: 11 } }, grid: { color: '#1e2d4a' } },
+        y: { ticks: { color: '#8a9bbf', font: { size: 11 }, stepSize: 1 }, grid: { color: '#1e2d4a' } }
+      }
+    }
+  });
+
+  // Chart: sezioni più lette
+  const top = data.sezioniPopolare.slice(0, 10);
+  if (chartSezioni) chartSezioni.destroy();
+  chartSezioni = new Chart(document.getElementById('chartSezioni'), {
+    type: 'bar',
+    data: {
+      labels: top.map(s => s.sezione_titolo || s.sezione_id),
+      datasets: [{
+        label: 'Visite',
+        data: top.map(s => s.visite),
+        backgroundColor: 'rgba(0,112,242,0.6)',
+        borderColor: '#0070f2',
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8a9bbf', font: { size: 11 }, stepSize: 1 }, grid: { color: '#1e2d4a' } },
+        y: { ticks: { color: '#8a9bbf', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ── Utenti ──
+async function loadUtenti() {
+  const res = await fetch(`${API}/admin/utenti`, { headers: authHeaders() });
+  if (!res.ok) return;
+  const utenti = await res.json();
+
+  const tbody = document.getElementById('tblUtenti');
+  if (!utenti.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Nessun utente trovato.</td></tr>'; return; }
+
+  tbody.innerHTML = utenti.map(u => `
+    <tr>
+      <td class="td-nome">${esc(u.nome)}</td>
+      <td>${esc(u.email)}</td>
+      <td><span class="badge ${u.ruolo === 'admin' ? 'badge-admin-r' : 'badge-user-r'}">${u.ruolo}</span></td>
+      <td><span class="badge ${u.attivo ? 'badge-user-r' : 'badge-inactive'}">${u.attivo ? 'Attivo' : 'Disabilitato'}</span></td>
+      <td>${formatDate(u.ultima_sessione)}</td>
+      <td>${u.sezioni_lette || 0}</td>
+      <td>${formatDurata(u.tempo_totale_secondi)}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-sm btn-detail" onclick="openDettaglio(${u.id})">Dettaglio</button>
+        <button class="btn-sm btn-toggle" onclick="toggleAttivo(${u.id}, ${u.attivo})">${u.attivo ? 'Disabilita' : 'Abilita'}</button>
+        <button class="btn-sm btn-delete" onclick="deleteUtente(${u.id}, '${esc(u.nome)}')">Elimina</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function toggleAttivo(id, attivo) {
+  const res = await fetch(`${API}/admin/utenti/${id}`, {
+    method: 'PATCH',
+    headers: authHeaders(),
+    body: JSON.stringify({ attivo: attivo ? 0 : 1 })
+  });
+  if (res.ok) { showToast('Stato utente aggiornato.'); loadUtenti(); }
+  else { const d = await res.json(); showToast(d.error, 'error'); }
+}
+
+async function deleteUtente(id, nome) {
+  if (!confirm(`Eliminare definitivamente l'utente "${nome}"? Tutti i dati analytics verranno persi.`)) return;
+  const res = await fetch(`${API}/admin/utenti/${id}`, { method: 'DELETE', headers: authHeaders() });
+  if (res.ok) { showToast('Utente eliminato.'); loadUtenti(); }
+  else { const d = await res.json(); showToast(d.error, 'error'); }
+}
+
+// Modal Nuovo Utente
+document.getElementById('btnNuovoUtente').addEventListener('click', () => {
+  document.getElementById('nu-nome').value = '';
+  document.getElementById('nu-email').value = '';
+  document.getElementById('nu-password').value = '';
+  document.getElementById('nu-ruolo').value = 'user';
+  document.getElementById('modalNuovoUtente').classList.add('show');
+});
+document.getElementById('btnCancelNuovo').addEventListener('click', () => {
+  document.getElementById('modalNuovoUtente').classList.remove('show');
+});
+document.getElementById('btnSalvaNuovo').addEventListener('click', async () => {
+  const nome = document.getElementById('nu-nome').value.trim();
+  const email = document.getElementById('nu-email').value.trim();
+  const password = document.getElementById('nu-password').value;
+  const ruolo = document.getElementById('nu-ruolo').value;
+
+  if (!nome || !email || !password) return showToast('Compila tutti i campi.', 'error');
+  if (password.length < 6) return showToast('Password minimo 6 caratteri.', 'error');
+
+  const res = await fetch(`${API}/admin/utenti`, {
+    method: 'POST', headers: authHeaders(),
+    body: JSON.stringify({ nome, email, password, ruolo })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    showToast('Utente creato con successo!');
+    document.getElementById('modalNuovoUtente').classList.remove('show');
+    loadUtenti();
+  } else {
+    showToast(data.error, 'error');
+  }
+});
+
+// Modal Dettaglio
+async function openDettaglio(id) {
+  document.getElementById('dettaglio-content').innerHTML = '<div class="loading">Caricamento…</div>';
+  document.getElementById('modalDettaglio').classList.add('show');
+
+  const res = await fetch(`${API}/admin/utenti/${id}/dettaglio`, { headers: authHeaders() });
+  if (!res.ok) { document.getElementById('dettaglio-content').innerHTML = '<div class="empty">Errore nel caricamento.</div>'; return; }
+  const { user: u, sezioni, sessioni } = await res.json();
+
+  document.getElementById('dettaglio-title').textContent = u.nome;
+
+  const sezioniHtml = sezioni.length ? `
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;color:#4a5a7a;font-size:10px;text-transform:uppercase;border-bottom:1px solid #1e2d4a">Sezione</th>
+        <th style="text-align:left;padding:6px 8px;color:#4a5a7a;font-size:10px;text-transform:uppercase;border-bottom:1px solid #1e2d4a">Visite</th>
+        <th style="text-align:left;padding:6px 8px;color:#4a5a7a;font-size:10px;text-transform:uppercase;border-bottom:1px solid #1e2d4a">Ultima visita</th>
+        <th style="text-align:left;padding:6px 8px;color:#4a5a7a;font-size:10px;text-transform:uppercase;border-bottom:1px solid #1e2d4a">Tempo totale</th>
+      </tr></thead>
+      <tbody>${sezioni.map(s => `
+        <tr>
+          <td style="padding:7px 8px;color:#e8edf5;border-bottom:1px solid #1e2d4a">${esc(s.sezione_titolo || s.sezione_id)}</td>
+          <td style="padding:7px 8px;color:#8a9bbf;border-bottom:1px solid #1e2d4a">${s.visite}</td>
+          <td style="padding:7px 8px;color:#8a9bbf;border-bottom:1px solid #1e2d4a">${formatDate(s.ultima_visita)}</td>
+          <td style="padding:7px 8px;color:#8a9bbf;border-bottom:1px solid #1e2d4a">${formatDurata(s.tempo_totale_secondi)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : '<div class="empty" style="padding:16px">Nessuna sezione letta.</div>';
+
+  document.getElementById('dettaglio-content').innerHTML = `
+    <div class="detail-section">
+      <h4>Info account</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+        <div><span style="color:#4a5a7a">Email:</span> <span style="color:#e8edf5">${esc(u.email)}</span></div>
+        <div><span style="color:#4a5a7a">Ruolo:</span> <span class="badge ${u.ruolo==='admin'?'badge-admin-r':'badge-user-r'}">${u.ruolo}</span></div>
+        <div><span style="color:#4a5a7a">Stato:</span> <span class="badge ${u.attivo?'badge-user-r':'badge-inactive'}">${u.attivo?'Attivo':'Disabilitato'}</span></div>
+        <div><span style="color:#4a5a7a">Registrato:</span> <span style="color:#8a9bbf">${formatDate(u.created_at)}</span></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h4>Sezioni lette (${sezioni.length})</h4>
+      ${sezioniHtml}
+    </div>
+    <div class="detail-section">
+      <h4>Ultime sessioni</h4>
+      ${sessioni.length ? sessioni.slice(0,5).map(s => `
+        <div style="font-size:12px;padding:6px 0;border-bottom:1px solid #1e2d4a;color:#8a9bbf">
+          🕐 ${formatDate(s.login_at)} ${s.logout_at ? '→ ' + formatDate(s.logout_at) : '<span style="color:#fbbf24">attiva</span>'}
+          <span style="color:#4a5a7a;font-size:11px;margin-left:8px">${esc(s.ip_address || '')}</span>
+        </div>`).join('') : '<div class="empty" style="padding:12px">Nessuna sessione.</div>'}
+    </div>`;
+}
+
+document.getElementById('btnChiudiDettaglio').addEventListener('click', () => {
+  document.getElementById('modalDettaglio').classList.remove('show');
+});
+
+// ── Statistiche ──
+async function loadStatistiche() {
+  const res = await fetch(`${API}/admin/statistiche`, { headers: authHeaders() });
+  if (!res.ok) return;
+  const { sezioniPopolare } = await res.json();
+
+  const tbody = document.getElementById('tblSezioni');
+  if (!sezioniPopolare.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Nessun dato disponibile.</td></tr>'; return; }
+
+  tbody.innerHTML = sezioniPopolare.map((s, i) => `
+    <tr>
+      <td style="color:#4a5a7a;font-weight:700">${i+1}</td>
+      <td class="td-nome">${esc(s.sezione_titolo || s.sezione_id)}</td>
+      <td>${s.visite}</td>
+      <td>${s.utenti_unici}</td>
+      <td>${formatDurata(Math.round(s.durata_media))}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Init ──
+loadDashboard();
+</script>
+</body>
+</html>

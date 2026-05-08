@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve frontend statico
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+app.use(express.static(path.join(__dirname, 'frontend')));
 
 // --- Routes API ---
 app.use('/api/auth', require('./routes/auth'));
@@ -32,7 +32,7 @@ app.get(/^(?!\/api).*/, (req, res) => {
   const file = req.path === '/admin' ? 'admin.html'
              : req.path === '/manuale' ? 'manuale.html'
              : 'login.html';
-  res.sendFile(path.join(__dirname, '..', 'frontend', file));
+  res.sendFile(path.join(__dirname, 'frontend', file));
 });
 
 // --- Error handler ---

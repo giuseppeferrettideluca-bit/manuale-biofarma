@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manuale Interattivo SAP WM | Biofarma Group</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   SAP HORIZON DARK — Color tokens
+═══════════════════════════════════════════════ */
+:root {
+  --sap-blue:    #0070f2;   /* sapBrandColor */
+  --sap-blue-d:  #0040b0;
+  --sap-shell:   #1b2a3b;   /* sapShellColor */
+  --sap-panel:   #243347;   /* secondary surface */
+  --sap-card:    #1e2d3d;   /* tile / card */
+  --sap-hover:   #2a3f57;
+  --sap-border:  #354a5e;   /* neutral border */
+  --sap-text:    #d1e0f0;   /* primary text on dark */
+  --sap-muted:   #8396a7;   /* label color */
+  --sap-faint:   #4a6070;   /* placeholder / disabled */
+  --sap-accent:  #40b4e5;   /* informative / link */
+  --sap-green:   #30914c;
+  --sap-orange:  #e76500;
+  --sap-red:     #bb0000;
+  --sap-yellow:  #e9730c;
+  --sap-teal:    #0e9494;
+
+  /* SAP screen (light mock) */
+  --win-bg:      #f5f6f7;
+  --win-border:  #d1d5da;
+  --win-header:  #1b4f8c;
+  --win-text:    #32363a;
+  --win-muted:   #556b82;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--sap-shell);
+  color: var(--sap-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   COURSE SELECTOR OVERLAY
+═══════════════════════════════════════════════ */
+.course-overlay {
+  display: none;
+  position: fixed; inset:0;
+  z-index: 500;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+}
+.course-overlay.show { display: flex; }
+
+.course-modal {
+  background: var(--sap-panel);
+  border: 1px solid var(--sap-border);
+  border-radius: 16px;
+  padding: 36px;
+  width: min(700px, 95vw);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.course-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--sap-text);
+}
+.course-modal-sub {
+  font-size: 13px;
+  color: var(--sap-muted);
+  margin-bottom: 28px;
+}
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.course-card {
+  background: var(--sap-card);
+  border: 1.5px solid var(--sap-border);
+  border-radius: 12px;
+  padding: 20px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.course-card:hover:not(.disabled) {
+  border-color: var(--sap-blue);
+  background: var(--sap-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,112,242,0.2);
+}
+.course-card.active-course {
+  border-color: var(--sap-blue);
+  background: rgba(0,112,242,0.08);
+}
+.course-card.disabled { opacity: 0.45; cursor: not-allowed; }
+.course-card-icon { font-size: 22px; margin-bottom: 10px; }
+.course-card-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--sap-accent);
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+.course-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sap-text);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.course-card-desc { font-size: 12px; color: var(--sap-muted); line-height: 1.5; }
+.course-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.badge-available { background: rgba(48,145,76,0.15); color: #5dca7a; border: 1px solid rgba(48,145,76,0.3); }
+.badge-soon      { background: rgba(64,180,229,0.1);  color: var(--sap-accent); border: 1px solid rgba(64,180,229,0.25); }
+
+/* ═══════════════════════════════════════════════
+   SHELL BAR (header)
+═══════════════════════════════════════════════ */
+.header {
+  height: 48px;
+  background: var(--sap-shell);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.logo-badge {
+  background: var(--sap-blue);
+  color: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+.header-title { font-size: 13px; color: rgba(209,224,240,0.6); font-weight: 300; }
+.header-divider { width: 1px; height: 20px; background: var(--sap-border); }
+.header-spacer { flex: 1; }
+
+.btn-courses {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: rgba(0,112,242,0.12);
+  border: 1px solid rgba(0,112,242,0.35);
+  border-radius: 6px;
+  color: var(--sap-accent);
+  font-size: 12px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-courses:hover { background: rgba(0,112,242,0.22); }
+
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--sap-muted);
+}
+.user-avatar {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #1a3a6a, var(--sap-blue));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 11px; color: #fff;
+}
+.btn-icon {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--sap-border);
+  border-radius: 6px;
+  color: var(--sap-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'IBM Plex Sans', sans-serif;
+  text-decoration: none;
+  display: inline-block;
+  white-space: nowrap;
+}
+.btn-icon:hover { border-color: var(--sap-blue); color: var(--sap-accent); }
+.btn-logout:hover { border-color: #e05; color: #f87; }
+
+/* Reading progress strip */
+.progress-strip {
+  height: 3px;
+  background: var(--sap-border);
+  position: sticky;
+  top: 48px;
+  z-index: 99;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--sap-blue), var(--sap-accent));
+  width: 0%;
+  transition: width 0.35s ease;
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════ */
+.layout {
+  display: grid;
+  grid-template-columns: 256px 1fr;
+  min-height: calc(100vh - 51px);
+}
+
+/* ═══════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════ */
+.sidebar {
+  background: var(--sap-panel);
+  border-right: 1px solid var(--sap-border);
+  padding: 24px 0 32px;
+  position: sticky;
+  top: 51px;
+  height: calc(100vh - 51px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--sap-border); border-radius: 2px; }
+
+.sidebar-course-tag {
+  margin: 0 16px 20px;
+  background: rgba(0,112,242,0.08);
+  border: 1px solid rgba(0,112,242,0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sidebar-course-tag:hover { border-color: var(--sap-blue); }
+.sidebar-course-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--sap-accent);
+  margin-bottom: 3px;
+}
+.sidebar-course-name { font-size: 12px; font-weight: 600; color: var(--sap-text); line-height: 1.4; }
+
+.sidebar-group-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--sap-faint);
+  padding: 0 20px;
+  margin-bottom: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  font-size: 13px;
+  color: var(--sap-muted);
+  user-select: none;
+}
+.nav-item:hover { background: var(--sap-hover); color: var(--sap-text); border-left-color: var(--sap-border); }
+.nav-item.active { background: rgba(0,112,242,0.1); border-left-color: var(--sap-blue); color: var(--sap-text); }
+.nav-item .nav-ico {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  background: var(--sap-card);
+  flex-shrink: 0;
+}
+.nav-item.active .nav-ico { background: var(--sap-blue); }
+.nav-item.done .nav-ico::after { content: ''; }
+.nav-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--sap-faint);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.nav-item.done .nav-num { color: var(--sap-green); }
+.nav-item.done .nav-num::before { content: '✓ '; }
+
+/* Progress footer */
+.sidebar-progress {
+  margin-top: auto;
+  padding: 16px 20px 0;
+  border-top: 1px solid var(--sap-border);
+}
+.prog-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--sap-faint); margin-bottom: 6px;
+}
+.prog-bar { height: 3px; background: var(--sap-border); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--sap-blue), var(--sap-accent)); border-radius: 3px; transition: width 0.5s ease; }
+
+/* ═══════════════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════════════ */
+.main { padding: 48px 52px; max-width: 980px; }
+
+.section { display: none; }
+.section.active { display: block; animation: fadeUp 0.35s ease; }
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(10px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.section-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--sap-accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.section-title {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 14px;
+  letter-spacing: -0.4px;
+  color: var(--sap-text);
+}
+.section-sub {
+  font-size: 14px;
+  color: var(--sap-muted);
+  line-height: 1.7;
+  max-width: 580px;
+  font-weight: 300;
+  margin-bottom: 36px;
+}
+
+/* ── Info grid ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.info-card {
+  background: var(--sap-card);
+  border: 1px solid var(--sap-border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  transition: all 0.2s;
+}
+.info-card:hover { border-color: var(--sap-blue); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,112,242,0.12); }
+.info-card-icon { font-size: 18px; margin-bottom: 10px; }
+.info-card-title { font-size: 12px; font-weight: 600; color: var(--sap-accent); font-family: 'IBM Plex Mono', monospace; margin-bottom: 5px; }
+.info-card-text { font-size: 13px; color: var(--sap-muted); line-height: 1.6; }
+
+/* ── Content block ── */
+.content-block {
+  background: var(--sap-card);
+  border: 1px solid var(--sap-border);
+  border-radius: 10px;
+  padding: 22px;
+  margin: 18px 0;
+}
+.content-block-title {
+  font-size: 11px; font-weight: 700; color: var(--sap-accent);
+  font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.5px;
+  text-transform: uppercase; margin-bottom: 12px;
+}
+
+.bullet-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.bullet-list li {
+  font-size: 13px; color: var(--sap-muted); padding-left: 18px;
+  position: relative; line-height: 1.6;
+}
+.bullet-list li::before { content: '▸'; color: var(--sap-accent); position: absolute; left:0; top:2px; font-size:10px; }
+.bullet-list li strong { color: var(--sap-text); }
+
+/* ── Step flow ── */
+.step-flow { display:flex; flex-direction:column; margin: 28px 0; }
+.step-item { display:grid; grid-template-columns:44px 1fr; position:relative; }
+.step-left { display:flex; flex-direction:column; align-items:center; }
+.step-circle {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--sap-card); border:2px solid var(--sap-border);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700;
+  color:var(--sap-muted); cursor:pointer; transition:all 0.25s; z-index:1;
+}
+.step-item:hover .step-circle { background:var(--sap-blue); border-color:var(--sap-blue); color:#fff; box-shadow:0 0 16px rgba(0,112,242,0.35); }
+.step-line { width:2px; flex:1; background:var(--sap-border); min-height:36px; }
+.step-item:last-child .step-line { display:none; }
+.step-content { padding: 6px 0 36px; }
+.step-title { font-size:14px; font-weight:600; margin-bottom:5px; }
+.step-desc { font-size:13px; color:var(--sap-muted); line-height:1.6; }
+.step-code {
+  display:inline-block; background:var(--sap-panel); border:1px solid var(--sap-border);
+  border-radius:4px; padding:1px 7px; font-family:'IBM Plex Mono',monospace;
+  font-size:11px; color:var(--sap-accent);
+}
+
+/* ── Pill badges ── */
+.badge { display:inline-block; font-size:10px; font-family:'IBM Plex Mono',monospace; padding:2px 7px; border-radius:4px; }
+.badge-blue   { background:rgba(0,112,242,0.15); color:#60a8ff; border:1px solid rgba(0,112,242,0.3); }
+.badge-green  { background:rgba(48,145,76,0.15); color:#5dca7a; border:1px solid rgba(48,145,76,0.3); }
+.badge-orange { background:rgba(231,101,0,0.15); color:#ffa040; border:1px solid rgba(231,101,0,0.3); }
+
+/* ── Nav buttons ── */
+.nav-buttons {
+  display:flex; gap:10px; margin-top:40px;
+  padding-top:28px; border-top:1px solid var(--sap-border);
+}
+.nav-btn {
+  padding:9px 22px; border-radius:6px; font-size:13px; font-weight:600;
+  cursor:pointer; transition:all 0.2s; border:none;
+  font-family:'IBM Plex Sans',sans-serif; display:flex; align-items:center; gap:8px;
+}
+.nav-btn.secondary { background:var(--sap-card); border:1px solid var(--sap-border); color:var(--sap-text); }
+.nav-btn.secondary:hover { border-color:var(--sap-blue); color:var(--sap-accent); }
+.nav-btn.primary { background:var(--sap-blue); color:#fff; box-shadow:0 3px 12px rgba(0,112,242,0.3); }
+.nav-btn.primary:hover { background:#0060d0; transform:translateY(-1px); }
+
+/* ═══════════════════════════════════════════════
+   SAP SCREEN MOCK
+═══════════════════════════════════════════════ */
+.sap-screen {
+  background: var(--win-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--win-border);
+  margin: 20px 0;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+}
+.sap-topbar {
+  background: var(--win-header);
+  padding: 5px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  color: #fff; font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.sap-topbar-left { display:flex; align-items:center; gap:8px; }
+.sap-icon-btn {
+  width:22px; height:22px; background:rgba(255,255,255,0.15); border-radius:3px;
+  display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer;
+}
+.sap-toolbar {
+  background: #e8ecf0; padding: 5px 12px;
+  display:flex; align-items:center; gap:6px;
+  border-bottom:1px solid #ccc; flex-wrap:wrap;
+}
+.sap-btn {
+  background: linear-gradient(180deg,#f8f8f8,#e6e6e6);
+  border: 1px solid #aaa; border-radius:2px;
+  padding: 3px 10px; font-size:11px; color:#222;
+  cursor:pointer; font-family:'IBM Plex Sans',sans-serif;
+  transition: background 0.15s;
+}
+.sap-btn:hover { background: linear-gradient(180deg,#deeaff,#c8daff); border-color:#1b4f8c; }
+.sap-btn.primary-sap { background:linear-gradient(180deg,#1b6cc8,#1554a0); color:#fff; border-color:#1040a0; }
+.sap-body { background:#fff; padding:14px 18px; color:var(--win-text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; }
+.sap-field-row { display:flex; align-items:center; gap:14px; margin-bottom:9px; flex-wrap:wrap; }
+.sap-field { display:flex; align-items:center; gap:5px; }
+.sap-field label { font-size:12px; color:#555; white-space:nowrap; }
+.sap-input {
+  border:1px solid #aaa; background:#fafff8; padding:3px 7px;
+  font-size:11px; border-radius:2px; min-width:110px;
+  font-family:'IBM Plex Mono',monospace; color:#222;
+}
+.sap-input.filled { background:#e8f4ff; border-color:var(--win-header); font-weight:600; color:var(--win-header); }
+.sap-section-title {
+  font-size:11px; font-weight:700; color:var(--win-header);
+  border-bottom:1px solid #d0d8e8; padding-bottom:3px; margin:12px 0 8px;
+}
+.sap-table { width:100%; border-collapse:collapse; font-size:11px; margin:8px 0; }
+.sap-table th { background:#dce4f0; border:1px solid #c0cce0; padding:4px 8px; text-align:left; font-weight:600; color:#1a3060; }
+.sap-table td { border:1px solid #dde; padding:4px 8px; color:#222; font-family:'IBM Plex Mono',monospace; }
+.sap-table tr:nth-child(even) td { background:#f5f7fc; }
+.sap-status {
+  background:#e0e8f0; padding:4px 12px; font-size:11px;
+  color:var(--win-header); border-top:1px solid #c0cce0;
+  font-family:'IBM Plex Mono',monospace;
+}
+.sap-status.ok { background:#d4f0d4; color:#1a6b1a; }
+
+/* ═══════════════════════════════════════════════
+   FIELD BADGE — inline annotator (replaces hotspots)
+   No absolute positioning = no text overlap
+═══════════════════════════════════════════════ */
+.field-badge {
+  display: inline-flex;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--win-header);
+  color: #fff;
+  font-size: 9px; font-weight: 700;
+  align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  border: none; outline: none;
+  transition: all 0.2s;
+  animation: badge-pulse 2.5s ease-in-out infinite;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.field-badge:hover { background: var(--sap-blue); transform:scale(1.25); animation:none; }
+@keyframes badge-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,112,242,0.5); }
+  50%      { box-shadow: 0 0 0 5px rgba(0,112,242,0); }
+}
+
+/* ── Annotation legend (cards below each screen) ── */
+.annotation-legend {
+  background: var(--sap-card);
+  border: 1px solid var(--sap-border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 4px;
+}
+.legend-title {
+  font-size: 10px; color: var(--sap-faint); font-family:'IBM Plex Mono',monospace;
+  letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;
+}
+.legend-items { display:flex; flex-wrap:wrap; gap:8px; }
+.legend-item {
+  display:flex; align-items:center; gap:8px;
+  cursor:pointer; padding:6px 12px;
+  border-radius:6px; border:1px solid var(--sap-border);
+  transition:all 0.15s; font-size:12px; color:var(--sap-muted);
+}
+.legend-item:hover { border-color:var(--sap-accent); color:var(--sap-text); background:rgba(64,180,229,0.06); }
+.legend-dot {
+  width:18px; height:18px; border-radius:50%;
+  background: var(--win-header); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:700; font-family:'IBM Plex Mono',monospace; flex-shrink:0;
+}
+
+/* ── RF Terminal ── */
+.rf-screen {
+  background:#111; border:2px solid #444; border-radius:6px;
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:#00ff00;
+  padding:14px; width:256px; margin:12px auto;
+}
+.rf-title { text-align:center; border-bottom:1px solid #333; padding-bottom:7px; margin-bottom:10px; color:#7fff00; font-size:11px; letter-spacing:2px; }
+.rf-row { display:flex; justify-content:space-between; margin-bottom:7px; }
+.rf-label { color:#666; }
+.rf-value { color:#0f0; }
+.rf-field { border:1px solid #0f0; background:#000; color:#0f0; padding:3px 7px; width:100%; font-family:'IBM Plex Mono',monospace; font-size:11px; border-radius:2px; margin-top:3px; cursor:pointer; }
+
+/* ── Tooltip overlay ── */
+.tooltip-overlay {
+  display:none; position:fixed; inset:0; z-index:600;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.72); backdrop-filter:blur(5px);
+}
+.tooltip-overlay.visible { display:flex; animation:fadeUp 0.2s ease; }
+.tooltip-box {
+  background: var(--sap-card);
+  border:1px solid var(--sap-accent); border-radius:12px;
+  padding:26px 30px; max-width:460px; width:90%;
+  position:relative; box-shadow:0 20px 56px rgba(64,180,229,0.18);
+}
+.tooltip-close { position:absolute; top:12px; right:14px; cursor:pointer; color:var(--sap-faint); font-size:17px; transition:color 0.2s; }
+.tooltip-close:hover { color:var(--sap-text); }
+.tooltip-tag { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--sap-accent); text-transform:uppercase; margin-bottom:9px; }
+.tooltip-title { font-size:17px; font-weight:700; margin-bottom:10px; line-height:1.3; }
+.tooltip-body { font-size:13px; color:var(--sap-muted); line-height:1.7; }
+.tooltip-body strong { color:var(--sap-text); }
+.tooltip-tip {
+  margin-top:14px; background:rgba(48,145,76,0.1); border:1px solid rgba(48,145,76,0.3);
+  border-radius:8px; padding:11px 13px; font-size:12px; color:#5dca7a;
+  display:flex; gap:8px; align-items:flex-start;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     COURSE SELECTOR OVERLAY
+══════════════════════════════════════════════════ -->
+<div class="course-overlay" id="courseOverlay">
+  <div class="course-modal">
+    <div class="course-modal-title">📚 Seleziona il corso</div>
+    <div class="course-modal-sub">Scegli il modulo del Manuale SAP WM da visualizzare</div>
+    <div class="course-grid" id="courseGrid">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TOOLTIP OVERLAY
+══════════════════════════════════════════════════ -->
+<div class="tooltip-overlay" id="tooltipOverlay" onclick="closeTooltip(event)">
+  <div class="tooltip-box" onclick="event.stopPropagation()">
+    <div class="tooltip-close" onclick="closeTooltip()">✕</div>
+    <div class="tooltip-tag" id="tooltipTag"></div>
+    <div class="tooltip-title" id="tooltipTitle"></div>
+    <div class="tooltip-body" id="tooltipBody"></div>
+    <div class="tooltip-tip" id="tooltipTip" style="display:none">
+      <span>💡</span><span id="tooltipTipText"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SHELL BAR
+══════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="logo-badge">SAP WM</div>
+  <div class="header-divider"></div>
+  <div class="header-title" id="headerCourseTitle">Manuale Interattivo</div>
+  <div class="header-spacer"></div>
+  <button class="btn-courses" onclick="openCourseSelector()">📚 Cambia corso</button>
+  <div class="header-divider"></div>
+  <div class="user-pill">
+    <div class="user-avatar" id="userAvatar">U</div>
+    <span id="userName">—</span>
+  </div>
+  <a href="/admin" class="btn-icon" id="btnAdmin" style="display:none">⚙ Admin</a>
+  <button class="btn-icon btn-logout" id="btnLogout">↩ Esci</button>
+</header>
+<div class="progress-strip"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ══════════════════════════════════════════════════
+     LAYOUT
+══════════════════════════════════════════════════ -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-course-tag" onclick="openCourseSelector()">
+      <div class="sidebar-course-label">Corso attivo</div>
+      <div class="sidebar-course-name" id="sidebarCourseName">Cap. 6 — Ordine di Trasferimento</div>
+    </div>
+
+    <div class="sidebar-group-label">Sezioni</div>
+
+    <div class="nav-item active" data-section="intro" onclick="goToSection('intro')">
+      <div class="nav-ico">📋</div> Cos'è l'OT?
+      <span class="nav-num">01</span>
+    </div>
+    <div class="nav-item" data-section="creation" onclick="goToSection('creation')">
+      <div class="nav-ico">➕</div> Creazione OT
+      <span class="nav-num">02</span>
+    </div>
+    <div class="nav-item" data-section="lt06" onclick="goToSection('lt06')">
+      <div class="nav-ico">🖥️</div> Schermata LT06
+      <span class="nav-num">03</span>
+    </div>
+    <div class="nav-item" data-section="palletize" onclick="goToSection('palletize')">
+      <div class="nav-ico">📦</div> Pallettizzazione
+      <span class="nav-num">04</span>
+    </div>
+    <div class="nav-item" data-section="foreground" onclick="goToSection('foreground')">
+      <div class="nav-ico">✏️</div> Esecuzione Foreground
+      <span class="nav-num">05</span>
+    </div>
+    <div class="nav-item" data-section="confirm" onclick="goToSection('confirm')">
+      <div class="nav-ico">✅</div> Conferma RF
+      <span class="nav-num">06</span>
+    </div>
+
+    <div class="sidebar-progress">
+      <div class="prog-label"><span>Progresso</span><span id="progPct">0%</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ══════════════════════════════════════
+         § 1  COS'È L'OT
+    ══════════════════════════════════════ -->
+    <div class="section active" id="section-intro">
+      <div class="section-eyebrow">Capitolo 6 · Introduzione</div>
+      <h1 class="section-title">Ordine di Trasferimento (OT)</h1>
+      <p class="section-sub">Ogni movimentazione fisica in Warehouse Management avviene tramite un Ordine di Trasferimento. Scopri come funziona cliccando sui punti interattivi nelle schermate SAP.</p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-card-icon">🔄</div>
+          <div class="info-card-title">Cos'è un OT</div>
+          <div class="info-card-text">Il Transfer Order (TO) è il documento che governa ogni spostamento fisico di merce all'interno del magazzino WM in SAP.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon">📍</div>
+          <div class="info-card-title">Origine → Destinazione</div>
+          <div class="info-card-text">Ogni OT ha un'ubicazione di partenza (es. 902 o zona di ricezione) e una di destinazione dove il materiale deve essere posizionato.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon">⚡</div>
+          <div class="info-card-title">Creazione Automatica</div>
+          <div class="info-card-text">L'OT può essere generato automaticamente al salvataggio della transazione MIGO, se il customizing lo prevede.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-icon">🖱️</div>
+          <div class="info-card-title">Creazione Manuale</div>
+          <div class="info-card-text">In alternativa si usa la transazione <strong>LT06</strong> per creare l'OT manualmente partendo dal documento materiale.</div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="content-block-title">Cosa contiene ogni OT</div>
+        <ul class="bullet-list">
+          <li><strong>Materiale</strong> — il codice articolo da movimentare</li>
+          <li><strong>Quantità</strong> — la quantità da trasferire nell'unità di misura prevista</li>
+          <li><strong>Ubicazione di origine</strong> — tipicamente 902 (interim storage) o zona di ricezione</li>
+          <li><strong>Ubicazione di destinazione</strong> — lo scaffale/corsia dove il materiale verrà stoccato</li>
+        </ul>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn primary" onclick="goToSection('creation')">Avanti: Creazione OT →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         § 2  METODI DI CREAZIONE
+    ══════════════════════════════════════ -->
+    <div class="section" id="section-creation">
+      <div class="section-eyebrow">Capitolo 6 · Metodi di Creazione</div>
+      <h1 class="section-title">Come si crea un OT?</h1>
+      <p class="section-sub">Esistono due modalità per generare un Ordine di Trasferimento. La scelta dipende dal flusso operativo in uso.</p>
+
+      <div class="step-flow">
+        <div class="step-item">
+          <div class="step-left">
+            <div class="step-circle" onclick="showTooltip('auto-migo','Creazione Automatica via MIGO','Quando si registra un\'entrata merci tramite la transazione <strong>MIGO</strong>, il sistema SAP può generare automaticamente l\'OT al momento del salvataggio.<br><br>Il documento materiale viene creato (es. <strong>5000285295 / 2026</strong>) e l\'OT è prodotto in background senza ulteriori azioni.','Questo avviene se nel customizing del magazzino è attiva la creazione automatica di TO per il tipo di movimento.')">01</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Creazione Automatica <span class="badge badge-green">Raccomandato</span></div>
+            <div class="step-desc">Al salvataggio di <span class="step-code">MIGO</span> il sistema genera automaticamente l'OT. Clicca il numero per saperne di più.</div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-left">
+            <div class="step-circle" onclick="showTooltip('manual-lt06','Creazione Manuale via LT06','La transazione <strong>LT06</strong> permette di creare manualmente un OT partendo dal documento materiale già registrato.<br><br>Campi richiesti:<br>• <strong>Documento materiale</strong> (es. 5000285295)<br>• <strong>Esercizio doc. mat.</strong> (es. 2026)<br>• <strong>Numero magazzino</strong> (opzionale)<br><br>Il tipo di esecuzione si imposta su <strong>H — In foreground</strong> per avere il controllo dell\'ubicazione di destinazione.','Usa LT06 quando l\'OT automatico non è stato generato, o quando vuoi controllare manualmente la destinazione.')">02</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Creazione Manuale <span class="badge badge-blue">LT06</span></div>
+            <div class="step-desc">Tramite <span class="step-code">LT06</span> si inserisce manualmente il documento materiale di riferimento. Permette di controllare ubicazione e UDC.</div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-left">
+            <div class="step-circle" onclick="showTooltip('confirm-rf','Conferma via Pistoletta RF','Una volta creato, l\'OT deve essere <strong>confermato</strong> tramite la pistoletta RF. La conferma:<br><br>• Rende effettivo lo spostamento fisico<br>• Rimuove lo stock dall\'interim storage 902<br>• Rende il materiale disponibile per utilizzi successivi<br><br>L\'operatore scannerizza l\'ubicazione reale, che può differire da quella suggerita.','L\'operatore può sovrascrivere l\'ubicazione suggerita scansionando una locazione diversa.')">03</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Conferma con Pistoletta RF</div>
+            <div class="step-desc">L'operatore conferma l'OT con la pistoletta RF scansionando l'ubicazione di destinazione reale. Lo stock viene finalizzato nel sistema.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn secondary" onclick="goToSection('intro')">← Indietro</button>
+        <button class="nav-btn primary" onclick="goToSection('lt06')">Avanti: Schermata LT06 →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         § 3  SCHERMATA LT06
+    ══════════════════════════════════════ -->
+    <div class="section" id="section-lt06">
+      <div class="section-eyebrow">Capitolo 6 · Transazione LT06</div>
+      <h1 class="section-title">Schermata LT06</h1>
+      <p class="section-sub">Creazione manuale dell'OT da documento materiale. Clicca i <strong style="color:var(--sap-accent)">pallini</strong> accanto ai campi per scoprirne il dettaglio.</p>
+
+      <div class="sap-screen">
+        <div class="sap-topbar">
+          <div class="sap-topbar-left">
+            <span style="font-weight:700;font-size:13px;color:#8af;">SAP</span>
+            <span>Creare ord. trasf. per doc. materiale: videata iniziale</span>
+          </div>
+          <div style="display:flex;gap:5px;">
+            <div class="sap-icon-btn">💾</div><div class="sap-icon-btn">🖨️</div><div class="sap-icon-btn">✕</div>
+          </div>
+        </div>
+        <div class="sap-toolbar">
+          <span style="font-size:11px;color:#555;margin-right:6px;font-family:'IBM Plex Mono',monospace;">LT06</span>
+          <div class="sap-btn">Altro ∨</div>
+          <div style="flex:1"></div>
+          <div class="sap-btn">terminare</div>
+        </div>
+        <div class="sap-body" style="padding:20px 24px;">
+          <div class="sap-field-row" style="margin-bottom:16px;">
+            <div class="sap-field">
+              <button class="field-badge" onclick="showTooltip('doc-mat','Documento Materiale','È il numero del documento generato dalla transazione <strong>MIGO</strong> al momento della registrazione dell\'entrata merci.<br><br>Formato: numero a 10 cifre (es. <strong>5000285295</strong>). SAP lo usa per ricavare tutti i dati del materiale, quantità e ubicazione di provenienza.','Il documento materiale è generato automaticamente da MIGO. Trovalo nel messaggio di conferma a fondo schermata.')">1</button>
+              <label>* Documento materiale:</label>
+              <input class="sap-input filled" value="5000285295" readonly>
+            </div>
+          </div>
+          <div class="sap-field-row" style="margin-bottom:16px;">
+            <div class="sap-field">
+              <button class="field-badge" onclick="showTooltip('eserc','Esercizio Documento Materiale','L\'anno contabile in cui è stato registrato il documento materiale. Di norma corrisponde all\'anno corrente (es. <strong>2026</strong>).<br><br>SAP usa la combinazione <em>numero documento + esercizio</em> per identificare univocamente la registrazione.','A cavallo di anno, verifica sempre di inserire l\'esercizio corretto.')">2</button>
+              <label>* Eserc. doc. mat.:</label>
+              <input class="sap-input filled" value="2026" readonly style="width:72px;">
+            </div>
+          </div>
+          <div class="sap-field-row" style="margin-bottom:16px;">
+            <div class="sap-field">
+              <label style="padding-left:22px;">Numero magazzino:</label>
+              <input class="sap-input" value="" readonly style="width:72px;">
+            </div>
+          </div>
+          <div class="sap-section-title">Controllo</div>
+          <div class="sap-field-row">
+            <div class="sap-field">
+              <button class="field-badge" onclick="showTooltip('foreground','Esecuzione: H In Foreground','Il parametro di esecuzione determina come SAP elabora l\'OT:<br><br>• <strong>H — In foreground</strong>: SAP apre una schermata di conferma dove l\'utente può verificare e modificare l\'ubicazione di destinazione prima della creazione definitiva.<br><br>• Background: l\'OT viene creato automaticamente senza interazione utente.','Usa sempre H (foreground) quando devi verificare o cambiare manualmente l\'ubicazione di destinazione del pallet.')">3</button>
+              <label>Esecuzione:</label>
+              <input class="sap-input filled" value="H  In foreground" readonly style="width:170px;">
+            </div>
+          </div>
+          <div style="height:48px;"></div>
+        </div>
+        <div class="sap-status ok">
+          <button class="field-badge" onclick="showTooltip('status-bar','Barra di Stato — Documento Registrato','La barra verde in fondo schermata conferma che il documento materiale <strong>5000285295</strong> è stato registrato correttamente.<br><br>Il link <em>«Visualizza dettagli»</em> permette di aprire il documento e verificare tutte le posizioni registrate prima di procedere con la creazione dell\'OT.','Controlla sempre la barra di stato dopo ogni operazione SAP: verde = successo, rosso = errore, giallo = avvertimento.')">4</button>
+          ✔ Registrato documento materiale 5000285295 &nbsp;&nbsp; Visualizza dettagli
+        </div>
+      </div>
+
+      <div class="annotation-legend">
+        <div class="legend-title">Clicca per esplorare i campi</div>
+        <div class="legend-items">
+          <div class="legend-item" onclick="showTooltip('doc-mat','Documento Materiale','Numero a 10 cifre generato da MIGO. SAP lo usa per ricavare materiale, quantità e ubicazione di provenienza.','Trovalo nel messaggio di conferma a fondo schermata MIGO.')">
+            <div class="legend-dot">1</div> Documento Materiale
+          </div>
+          <div class="legend-item" onclick="showTooltip('eserc','Esercizio Documento','Anno contabile (es. <strong>2026</strong>) della registrazione. Combinato al n. documento identifica univocamente la registrazione.','Verifica a cavallo di anno.')">
+            <div class="legend-dot">2</div> Esercizio
+          </div>
+          <div class="legend-item" onclick="showTooltip('foreground','Esecuzione Foreground','<strong>H</strong> = schermata di conferma con possibilità di modificare la destinazione prima della creazione definitiva.','Usa sempre H per controllo manuale.')">
+            <div class="legend-dot">3</div> Tipo Esecuzione
+          </div>
+          <div class="legend-item" onclick="showTooltip('status-bar','Barra di Stato','Verde = operazione riuscita. Il link «Visualizza dettagli» apre il documento.','Controlla sempre il colore della barra.')">
+            <div class="legend-dot">4</div> Barra di Stato
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn secondary" onclick="goToSection('creation')">← Indietro</button>
+        <button class="nav-btn primary" onclick="goToSection('palletize')">Avanti: Pallettizzazione →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         § 4  PALLETTIZZAZIONE
+    ══════════════════════════════════════ -->
+    <div class="section" id="section-palletize">
+      <div class="section-eyebrow">Capitolo 6 · Pallettizzazione</div>
+      <h1 class="section-title">Tasto "Pallettizzare"</h1>
+      <p class="section-sub">SAP trasforma il fabbisogno in unità di movimentazione concrete. Clicca i <strong style="color:var(--sap-accent)">pallini</strong> accanto ai campi per capire ogni elemento.</p>
+
+      <div class="content-block">
+        <div class="content-block-title">Come funziona la pallettizzazione</div>
+        <p style="font-size:13px;color:var(--sap-muted);line-height:1.7;">Il tasto <strong style="color:var(--sap-text)">Pallettizzare</strong> converte la lista di materiali da prelevare in unità fisiche di movimentazione. SAP aggrega le quantità per pallet e assegna un Handling Unit (HU) a ciascuno.</p>
+      </div>
+
+      <div class="sap-screen">
+        <div class="sap-topbar">
+          <div class="sap-topbar-left">
+            <span style="font-weight:700;font-size:13px;color:#8af;">SAP</span>
+            <span>Crea OT da FT: riepilogo fabbisogno di trasporto</span>
+          </div>
+          <div style="display:flex;gap:5px;"><div class="sap-icon-btn">💾</div><div class="sap-icon-btn">✕</div></div>
+        </div>
+        <div class="sap-toolbar">
+          <button class="field-badge" onclick="showTooltip('pallettizzare-btn','Tasto Pallettizzare','Questo pulsante attiva l\'algoritmo di pallettizzazione di SAP WM. Il sistema:<br><br>1. Legge le quantità del fabbisogno<br>2. Calcola quante unità entrano per pallet (dai dati UoM del materiale)<br>3. Genera un <strong>Handling Unit (HU)</strong> per ogni pallet<br>4. Assegna un <strong>Pallet ID</strong> univoco<br>5. Calcola peso e volume aggregati<br><br>Il risultato sono gli OT strutturati per pallet, pronti per la movimentazione.','Clicca Pallettizzare sempre prima di Registrazione per avere OT con struttura HU corretta.')">A</button>
+          <div class="sap-btn" style="background:linear-gradient(180deg,#d4e8ff,#b8d4ff);border-color:#1b4f8c;color:#1b4f8c;font-weight:700;">Pallettizzare</div>
+          <div class="sap-btn">Genera posizione OT</div>
+          <div class="sap-btn">Crea utà mag. (sing.)</div>
+          <div class="sap-btn">Imm. suppl. con UMg</div>
+          <div class="sap-btn">Altro ∨</div>
+          <div style="flex:1"></div>
+          <div class="sap-btn">terminare</div>
+        </div>
+        <div class="sap-body">
+          <div class="sap-field-row">
+            <div class="sap-field">
+              <button class="field-badge" onclick="showTooltip('tipo-movimento','Tipo Movimento 101','Il tipo di movimento <strong>101</strong> corrisponde a "Entrata merci da ordine di acquisto" (ORDACQ).<br><br>In SAP WM ogni tipo di movimento ha configurazioni specifiche che determinano:<br>• Da quale tipo magazzino (T.mag.prov.) proviene il materiale<br>• Verso quale tipo magazzino va<br>• Se l\'OT viene creato automaticamente<br>• Il tipo di stock aggiornato','Il tipo di movimento viene ereditato dal documento MIGO e non si modifica in questa schermata.')">B</button>
+              <label>Tipo movimento:</label>
+              <input class="sap-input filled" value="101 Entrata merci ORDACQ" readonly style="width:190px;">
+            </div>
+            <div class="sap-field"><label>Prior. trasp.:</label><input class="sap-input" value="" readonly style="width:72px;"></div>
+          </div>
+          <div class="sap-field-row">
+            <div class="sap-field">
+              <button class="field-badge" onclick="showTooltip('tmag-prov','T.mag.prov. 902','La <strong>Tipo Magazzino 902</strong> è l\'interim storage area (area di stoccaggio temporanea) dove SAP parcheggia virtualmente le merci dopo la registrazione MIGO e prima della conferma del TO.<br><br><strong>4500000602</strong> è il numero del documento logistico di riferimento (ordine d\'acquisto).','La 902 è sempre l\'area di provenienza per le entrate merci. Dopo la conferma del TO, lo stock viene spostato nell\'ubicazione finale.')">C</button>
+              <label>T.mag.prov.:</label>
+              <input class="sap-input filled" value="902  4500000602" readonly style="width:170px;">
+            </div>
+            <div class="sap-field"><label>Data plan.:</label><input class="sap-input filled" value="23.03.2026" readonly style="width:100px;"></div>
+          </div>
+          <div class="sap-field-row">
+            <div class="sap-field"><label style="padding-left:22px;">Tp.mag.dest.:</label><input class="sap-input" value="" readonly style="width:72px;"></div>
+            <div class="sap-field"><label>Ora pianificata:</label><input class="sap-input filled" value="23:59:59" readonly style="width:92px;"></div>
+          </div>
+          <div class="sap-field-row" style="margin-bottom:14px;">
+            <div class="sap-field"><label style="padding-left:22px;">N. fabbisogno:</label><input class="sap-input filled" value="B  4500000602" readonly style="width:148px;"></div>
+          </div>
+
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <div style="padding:3px 9px;border:1px solid #1b4f8c;border-radius:2px;font-size:11px;background:#dce8ff;color:#1b4f8c;cursor:pointer;">Lista lavoro attiva</div>
+            <div style="padding:3px 9px;border:1px solid #ccc;border-radius:2px;font-size:11px;color:#777;cursor:pointer;">Pos. non attive</div>
+            <div style="padding:3px 9px;border:1px solid #ccc;border-radius:2px;font-size:11px;color:#777;cursor:pointer;">Posizioni elaborate</div>
+          </div>
+
+          <table class="sap-table">
+            <thead>
+              <tr>
+                <th>Pos</th><th>Materiale</th><th>S.</th><th>T.</th>
+                <th>Qtà sel.</th><th>Un.</th><th>Qtà aperta</th>
+                <th>P.</th><th>Q.</th><th>O.</th>
+                <th>
+                  <button class="field-badge" onclick="showTooltip('partita','Numero Partita (Batch)','Il numero <strong>2000061076</strong> è il numero di partita (batch) del lotto del materiale 100000000394.<br><br>La gestione a partita permette la tracciabilità completa: ogni partita ha la propria data di scadenza, certificati di qualità e storia dei movimenti.','In ambiente farmaceutico la partita è fondamentale per la tracciabilità GxP. Non modificare mai il numero di partita manualmente.')">D</button>
+                  Partita
+                </th>
+                <th>Segm. stock</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td><td>100000000394</td><td></td><td></td>
+                <td style="text-align:center;">🔲</td>
+                <td>PZ</td><td>1</td><td></td><td></td><td></td>
+                <td>2000061076</td><td></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <div class="sap-btn">✓ All.</div>
+            <div class="sap-btn">✓ Inatt.</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:7px;padding:7px 12px;background:#e8ecf0;border-top:1px solid #ccc;">
+          <div class="sap-btn primary-sap">Registrazione</div>
+          <div class="sap-btn">Interrompere</div>
+        </div>
+      </div>
+
+      <div class="annotation-legend">
+        <div class="legend-title">Elementi della schermata</div>
+        <div class="legend-items">
+          <div class="legend-item" onclick="showTooltip('pallettizzare-btn','Tasto Pallettizzare','Attiva l\'algoritmo che trasforma il fabbisogno in HU (pallet) con ID univoci, quantità per pallet, peso e volume aggregati.','Clicca sempre prima di Registrazione.')">
+            <div class="legend-dot">A</div> Tasto Pallettizzare
+          </div>
+          <div class="legend-item" onclick="showTooltip('tipo-movimento','Tipo Movimento 101','<strong>101</strong> = Entrata merci da ordine d\'acquisto. Determina il flusso WM automaticamente.','Ereditato da MIGO, non modificare.')">
+            <div class="legend-dot">B</div> Tipo Movimento 101
+          </div>
+          <div class="legend-item" onclick="showTooltip('tmag-prov','T.mag.prov. 902','<strong>902</strong> = Interim Storage Area. Stock temporaneo post-MIGO, prima della conferma TO.','Sempre origine per entrate merci.')">
+            <div class="legend-dot">C</div> T.mag.prov. 902
+          </div>
+          <div class="legend-item" onclick="showTooltip('partita','Numero Partita','<strong>2000061076</strong> = Batch / lotto del materiale. Fondamentale per la tracciabilità GxP.','Mai modificare manualmente.')">
+            <div class="legend-dot">D</div> Numero Partita
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn secondary" onclick="goToSection('lt06')">← Indietro</button>
+        <button class="nav-btn primary" onclick="goToSection('foreground')">Avanti: Esecuzione Foreground →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         § 5  ESECUZIONE FOREGROUND
+    ══════════════════════════════════════ -->
+    <div class="section" id="section-foreground">
+      <div class="section-eyebrow">Capitolo 6 · Esecuzione in Foreground</div>
+      <h1 class="section-title">Controllo Ubicazione di Destinazione</h1>
+      <p class="section-sub">Prima che l'OT venga registrato, l'utente può verificare e modificare l'ubicazione di destinazione e l'UDC. Clicca i <strong style="color:var(--sap-accent)">pallini</strong> per il dettaglio di ogni campo.</p>
+
+      <div class="sap-screen">
+        <div class="sap-topbar">
+          <div class="sap-topbar-left">
+            <span style="font-weight:700;font-size:13px;color:#8af;">SAP</span>
+            <span>Crea OT per FT 0000000223 0001: prepara per immagazzinamento</span>
+          </div>
+          <div style="display:flex;gap:5px;"><div class="sap-icon-btn">💾</div><div class="sap-icon-btn">✕</div></div>
+        </div>
+        <div class="sap-toolbar">
+          <div class="sap-btn">Generare + mat.succ.</div>
+          <div class="sap-btn">↕</div>
+          <div class="sap-btn" style="background:#1b4f8c;color:white;">📊</div>
+          <div class="sap-btn">Parti mancanti</div>
+          <div class="sap-btn">Immagazzinare</div>
+          <div class="sap-btn">Altro ∨</div>
+          <div style="flex:1"></div>
+          <div class="sap-btn">terminare</div>
+        </div>
+        <div class="sap-body">
+          <div class="sap-field-row">
+            <div class="sap-field"><label>Materiale:</label><input class="sap-input filled" value="100000000394" readonly style="width:150px;"></div>
+          </div>
+          <div style="margin-bottom:9px;">
+            <button class="field-badge" onclick="showTooltip('descrizione-mat','Descrizione Materiale','SAP mostra la descrizione estesa del materiale in corsivo sotto il codice: <strong>CAPS VEGETALI BIANCHE SZ-3 TIO2</strong>.<br><br>Verifica sempre che la descrizione corrisponda al materiale fisico che stai movimentando — è un controllo visivo importante per prevenire errori di stoccaggio.','In caso di discrepanza tra descrizione SAP e etichetta fisica, STOP — contatta il supervisore di magazzino prima di procedere.')">1</button>
+            <span style="font-size:12px;color:#1b4f8c;font-style:italic;">CAPS VEGETALI BIANCHE SZ-3 TIO2</span>
+          </div>
+          <div class="sap-field-row">
+            <div class="sap-field">
+              <button class="field-badge" onclick="showTooltip('div-mag','Divisione e Magazzino','<strong>PI21</strong> = Divisione (Plant) di riferimento per questo materiale.<br><strong>1000</strong> = Numero magazzino WM.<br><br>La combinazione Plant/Warehouse determina la struttura di stoccaggio disponibile e le ubicazioni accessibili per questo materiale.','Se il magazzino visualizzato non è quello corretto, verifica i dati anagrafici del materiale (MM03) prima di procedere.')">2</button>
+              <label>Div./Magazzino:</label>
+              <input class="sap-input filled" value="PI21   1000" readonly style="width:110px;">
+            </div>
+            <div class="sap-field"><label>Tipo movimento:</label><input class="sap-input filled" value="101 Entrata merci ORDACQ" readonly style="width:190px;"></div>
+          </div>
+          <div class="sap-field-row">
+            <div class="sap-field"><label style="padding-left:22px;">Partita:</label><input class="sap-input filled" value="2000061076" readonly style="width:120px;"></div>
+          </div>
+          <div class="sap-field-row">
+            <div class="sap-field"><label style="padding-left:22px;">Tipo stock:</label><input class="sap-input" value="" readonly style="width:110px;"></div>
+            <div class="sap-field"><label>Ubic. di prov.:</label><input class="sap-input filled" value="902   4500000602" readonly style="width:170px;"></div>
+          </div>
+          <div class="sap-field-row">
+            <div class="sap-field"><label style="padding-left:22px;">Stock speciale:</label><input class="sap-input" value="" readonly style="width:110px;"></div>
+            <div class="sap-field"><label>Data EM:</label><input class="sap-input filled" value="23.03.2026" readonly style="width:100px;"></div>
+          </div>
+
+          <div class="sap-section-title">Palettizzazione</div>
+          <div style="display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start;">
+            <div>
+              <button class="field-badge" onclick="showTooltip('pallettizzazione-detail','Struttura Pallettizzazione','La tabella mostra la struttura di imballaggio:<br><br>• <strong>UM |</strong> (pallet): 1 pallet contiene × 10 confezioni<br>• <strong>UM 1</strong> (singolo): 1 unità base<br>• <strong>TUM 01</strong>: tipo unità di misura configurato nel sistema<br><br>Questa struttura determina come SAP calcola il numero di OT da generare (1 per pallet).','La struttura di pallettizzazione è definita in MM03 → scheda Magazzino. Per modifiche contatta il master data team.')">3</button>
+              <table class="sap-table" style="display:inline-table;width:auto;vertical-align:top;">
+                <thead><tr><th>UM</th><th>Qtà per UMag</th><th>TUM</th><th>Cat. Ar.</th></tr></thead>
+                <tbody>
+                  <tr><td>|</td><td>× 10</td><td>01</td><td></td></tr>
+                  <tr><td>1</td><td>× 1</td><td>01</td><td></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <div class="sap-section-title" style="margin-top:0;">Quantità</div>
+              <div class="sap-field-row"><div class="sap-field"><label>Qtà da immag.:</label><input class="sap-input filled" value="1" readonly style="width:56px;"><span style="font-size:11px;margin-left:4px;">PZ</span></div></div>
+              <div class="sap-field-row"><div class="sap-field"><label>Qtà aperta:</label><input class="sap-input filled" value="1" readonly style="width:56px;"></div></div>
+              <div class="sap-field-row"><div class="sap-field"><label>Totale pos. OT:</label><input class="sap-input" value="0" readonly style="width:56px;"></div></div>
+            </div>
+          </div>
+          <div style="margin-top:14px;border-top:1px solid #dde;padding-top:10px;font-size:11px;color:#888;">Posizioni</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:7px;padding:7px 12px;background:#e8ecf0;border-top:1px solid #ccc;">
+          <button class="field-badge" onclick="showTooltip('registrazione','Tasto Registrazione — Crea l\'OT','Cliccando <strong>Registrazione</strong>, SAP crea definitivamente l\'Ordine di Trasferimento.<br><br>Dopo la registrazione:<br>• Viene assegnato un numero OT univoco<br>• Lo stato dell\'OT diventa "Aperto"<br>• L\'OT appare nella coda di lavoro degli operatori RF<br><br>L\'OT è pronto per essere confermato tramite pistoletta RF.','Prima di cliccare Registrazione, verifica sempre l\'ubicazione di destinazione. Una volta creato, l\'OT si modifica solo annullandolo e ricreandolo.')">4</button>
+          <div class="sap-btn primary-sap">Registrazione</div>
+          <div class="sap-btn">Interrompere</div>
+        </div>
+      </div>
+
+      <div class="annotation-legend">
+        <div class="legend-title">Campi della schermata foreground</div>
+        <div class="legend-items">
+          <div class="legend-item" onclick="showTooltip('descrizione-mat','Descrizione Materiale','Descrizione estesa in corsivo. Verifica sempre che corrisponda al materiale fisico.','In caso di discrepanza contatta il supervisore.')">
+            <div class="legend-dot">1</div> Descrizione Materiale
+          </div>
+          <div class="legend-item" onclick="showTooltip('div-mag','Divisione / Magazzino','<strong>PI21 / 1000</strong>: combinazione Plant/Warehouse che determina le ubicazioni accessibili.','Verifica in MM03 se scorretto.')">
+            <div class="legend-dot">2</div> Divisione / Magazzino
+          </div>
+          <div class="legend-item" onclick="showTooltip('pallettizzazione-detail','Struttura Pallettizzazione','1 pallet = ×10 pz. Determina quanti OT genera SAP.','Solo master data team può modificarla.')">
+            <div class="legend-dot">3</div> Struttura Pallet
+          </div>
+          <div class="legend-item" onclick="showTooltip('registrazione','Tasto Registrazione','Crea definitivamente l\'OT. Stato → Aperto, appare nella coda RF.','Verifica l\'ubicazione prima di cliccare.')">
+            <div class="legend-dot">4</div> Registrazione OT
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn secondary" onclick="goToSection('palletize')">← Indietro</button>
+        <button class="nav-btn primary" onclick="goToSection('confirm')">Avanti: Conferma RF →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         § 6  CONFERMA RF
+    ══════════════════════════════════════ -->
+    <div class="section" id="section-confirm">
+      <div class="section-eyebrow">Capitolo 6 · Conferma con Pistoletta RF</div>
+      <h1 class="section-title">Conferma dell'OT tramite RF</h1>
+      <p class="section-sub">L'ultimo passo: l'operatore usa la pistoletta RF per confermare fisicamente lo stoccaggio del materiale nell'ubicazione corretta.</p>
+
+      <div class="info-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="info-card" onclick="showTooltip('effettivo','Rende Effettivo lo Spostamento','La conferma RF aggiorna il database WM con la posizione definitiva del materiale.<br><br>Prima della conferma lo stock è "in transito" virtualmente. Dopo, il sistema sa esattamente dove si trova ogni pallet.','La conferma è obbligatoria. Senza, lo stock rimane in 902 e non è disponibile per il prelievo.')">
+          <div class="info-card-icon">🔄</div>
+          <div class="info-card-title">Spostamento Effettivo</div>
+          <div class="info-card-text">Aggiorna la posizione del materiale nel sistema in modo definitivo.</div>
+        </div>
+        <div class="info-card" onclick="showTooltip('rimuove-interim','Svuota Interim Storage','La conferma rimuove il record di stock dall\'area <strong>902</strong> dove era posizionato virtualmente dopo la registrazione MIGO.<br><br>Se l\'OT non viene confermato, SAP mostra ancora stock in 902 che non corrisponde alla realtà fisica.','Monitora gli OT aperti con LT26. OT non confermati da ore devono essere gestiti.')">
+          <div class="info-card-icon">📤</div>
+          <div class="info-card-title">Svuota Interim Storage</div>
+          <div class="info-card-text">Rimuove lo stock dall'area 902 dove era temporaneamente registrato.</div>
+        </div>
+        <div class="info-card" onclick="showTooltip('disponibile','Materiale Disponibile','Una volta confermato l\'OT, il materiale è disponibile per:<br><br>• Prelievo per produzione o spedizione<br>• Inventari<br>• Trasferimenti interni<br>• Verifica qualità (se richiesto)','Se il materiale deve passare dal controllo qualità, verifica che lo stock speciale Q sia configurato correttamente.')">
+          <div class="info-card-icon">✅</div>
+          <div class="info-card-title">Materiale Disponibile</div>
+          <div class="info-card-text">Rende il materiale disponibile per prelievo, inventario e trasferimenti.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin:28px 0;">
+        <div>
+          <div style="font-size:10px;color:var(--sap-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Menu RF — Pistoletta</div>
+          <div class="rf-screen" style="width:248px;margin:0;">
+            <div class="rf-title">MENU RF</div>
+            <div style="font-size:11px;color:#555;margin-bottom:8px;">F3 Ind.  F4 Cont.</div>
+            <div style="border:2px solid #0f0;padding:4px 7px;margin-bottom:3px;cursor:pointer;" onclick="showTooltip('rf-1','1. Trasf.to UdC...','Trasferimento da Unità di Carico: usato per movimentare un pallet identificato da un HU (Handling Unit).','Usa questa opzione quando stai confermando un pallet con HU assegnato.')">1.Trasf.to UdC ...</div>
+            <div style="padding:4px 7px;margin-bottom:3px;cursor:pointer;color:#888;" onclick="showTooltip('rf-2','2. Trasf.to Q.tà...','Trasferimento per quantità: usato per movimentare quantità sfuse senza HU.','Alternativa a UdC per stock non palettizzato.')">2.Trasf.to Q.tà...</div>
+            <div style="border:2px solid #ff0;padding:4px 7px;margin-bottom:3px;cursor:pointer;color:#ff0;" onclick="showTooltip('rf-3','3. Conferma OT...','Opzione principale per confermare un OT esistente.<br><br>L\'operatore inserisce (o scannerizza) il numero OT e poi scansiona l\'ubicazione dove sta fisicamente posizionando il materiale.','Opzione più comune per confermare OT generati da LT06 o automaticamente da MIGO.')">3.Conferma OT ...</div>
+            <div style="padding:4px 7px;margin-bottom:3px;color:#888;cursor:pointer;" onclick="showTooltip('rf-4','4. Conferma OT 3PL...','Conferma OT per operatori logistici terzi (3PL). Come la Conferma OT standard ma con log aggiuntivi per magazzini in outsourcing.','Usare solo se il magazzino è gestito da un 3PL.')">4.Conferma OT 3PL...</div>
+            <div style="padding:4px 7px;margin-bottom:3px;color:#888;cursor:pointer;">5.Scarica UDB ...</div>
+            <div style="padding:4px 7px;margin-bottom:3px;color:#888;cursor:pointer;">6.Check CAMP. ...</div>
+            <div style="margin-top:7px;border-top:1px solid #333;padding-top:5px;color:#444;font-size:10px;">F8 LOff   SeT.</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:10px;color:var(--sap-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Selezione OT</div>
+          <div class="rf-screen" style="width:248px;margin:0 0 16px 0;">
+            <div class="rf-title">SEL. ORDINE DI TRASFERIMENTO</div>
+            <div style="font-size:11px;color:#555;margin-bottom:8px;">F2 Reset.  F3 Ind.  F4 Cont.</div>
+            <div style="font-size:11px;color:#888;margin-bottom:3px;">Ord. trasferim.</div>
+            <input class="rf-field" value="320_____" readonly onclick="showTooltip('rf-numero-ot','Numero OT da Confermare','L\'operatore inserisce o scannerizza il numero dell\'OT da confermare.<br><br>Il numero OT può essere:<br>• Inserito manualmente dalla lista di lavoro<br>• Scannerizzato dal documento stampato<br>• Selezionato dalla coda RF<br><br>Dopo la conferma, la pistoletta mostra: materiale, quantità, ubicazione suggerita.','La pistoletta RF può mostrare automaticamente il prossimo OT in base alla priorità.')">
+          </div>
+
+          <div style="font-size:10px;color:var(--sap-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Scansione ubicazione</div>
+          <div class="rf-screen" style="width:248px;margin:0;">
+            <div class="rf-title">CONFERMA OT</div>
+            <div class="rf-row"><span class="rf-label">OT:</span><span class="rf-value">320_____</span></div>
+            <div class="rf-row"><span class="rf-label">Mat.:</span><span class="rf-value">1000000394</span></div>
+            <div class="rf-row"><span class="rf-label">Qtà:</span><span class="rf-value">1 PZ</span></div>
+            <div class="rf-row"><span class="rf-label">Ubic. sugg.:</span><span class="rf-value" style="color:#ff0;">A-01-01</span></div>
+            <div style="border-top:1px solid #333;padding-top:9px;margin-top:5px;" onclick="showTooltip('rf-scan','Scansione Ubicazione di Destinazione','L\'operatore scansiona l\'ubicazione fisica dove sta posizionando il pallet.<br><br><strong>Importante:</strong> questa ubicazione può essere <em>diversa</em> da quella suggerita (mostrata in giallo).<br><br>Se l\'ubicazione suggerita è occupata, l\'operatore scansiona un\'alternativa libera. SAP aggiorna il record con la posizione reale.')">
+              <div style="font-size:11px;color:#888;margin-bottom:3px;">Scansiona ubicazione reale:</div>
+              <input class="rf-field" value="[  |||||||  ]" readonly style="cursor:pointer;text-align:center;letter-spacing:3px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-block">
+        <div class="content-block-title">Flusso completo di conferma RF</div>
+        <ul class="bullet-list">
+          <li>Dal Menu RF, selezionare <strong>3. Conferma OT</strong></li>
+          <li>Inserire o scannerizzare il <strong>numero OT</strong> da confermare</li>
+          <li>La pistoletta mostra materiale, quantità e <strong>ubicazione suggerita</strong></li>
+          <li>Posizionare fisicamente il pallet nell'ubicazione scelta</li>
+          <li><strong>Scansionare l'ubicazione di destinazione</strong> (può differire da quella suggerita)</li>
+          <li>Confermare: SAP aggiorna lo stock e chiude l'OT</li>
+        </ul>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn secondary" onclick="goToSection('foreground')">← Indietro</button>
+        <button class="nav-btn primary" onclick="goToSection('intro')">↩ Ricomincia dal principio</button>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /layout -->
+
+<script>
+// ══════════════════════════════════════════════════
+//  COURSES CATALOG
+// ══════════════════════════════════════════════════
+const COURSES = [
+  {
+    id: 'cap6-ot',
+    icon: '🔄',
+    num: 'Capitolo 6',
+    title: 'Ordine di Trasferimento',
+    desc: 'Creazione, pallettizzazione e conferma RF degli OT nel magazzino WM.',
+    available: true
+  },
+  {
+    id: 'cap1-intro',
+    icon: '📖',
+    num: 'Capitolo 1',
+    title: 'Introduzione a SAP WM',
+    desc: 'Struttura del magazzino, tipi di stoccaggio e navigazione base.',
+    available: false
+  },
+  {
+    id: 'cap3-migo',
+    icon: '📥',
+    num: 'Capitolo 3',
+    title: 'Entrata Merci — MIGO',
+    desc: 'Registrazione entrate merci da ordini di acquisto e resi.',
+    available: false
+  },
+  {
+    id: 'cap5-inventario',
+    icon: '📊',
+    num: 'Capitolo 5',
+    title: 'Inventario',
+    desc: 'Procedure di conteggio fisico e riconciliazione con SAP WM.',
+    available: false
+  },
+  {
+    id: 'cap7-prelievo',
+    icon: '🚚',
+    num: 'Capitolo 7',
+    title: 'Prelievo e Spedizione',
+    desc: 'TO per prelievo produzione, outbound delivery e spedizioni.',
+    available: false
+  },
+  {
+    id: 'cap8-rf',
+    icon: '📡',
+    num: 'Capitolo 8',
+    title: 'Operatività RF',
+    desc: 'Tutte le funzioni della pistoletta RF: trasferimenti, inventari, stampe.',
+    available: false
+  }
+];
+
+let activeCourse = COURSES[0];
+
+function buildCourseGrid() {
+  const grid = document.getElementById('courseGrid');
+  grid.innerHTML = COURSES.map(c => `
+    <div class="course-card ${c.available ? '' : 'disabled'} ${c.id === activeCourse.id ? 'active-course' : ''}"
+         onclick="${c.available ? `selectCourse('${c.id}')` : 'void(0)'}">
+      <span class="course-badge ${c.available ? 'badge-available' : 'badge-soon'}">${c.available ? 'Disponibile' : 'Prossimamente'}</span>
+      <div class="course-card-icon">${c.icon}</div>
+      <div class="course-card-num">${c.num}</div>
+      <div class="course-card-title">${c.title}</div>
+      <div class="course-card-desc">${c.desc}</div>
+    </div>
+  `).join('');
+}
+
+function openCourseSelector() {
+  buildCourseGrid();
+  document.getElementById('courseOverlay').classList.add('show');
+}
+
+function selectCourse(id) {
+  activeCourse = COURSES.find(c => c.id === id);
+  document.getElementById('headerCourseTitle').textContent = activeCourse.num + ' — ' + activeCourse.title;
+  document.getElementById('sidebarCourseName').textContent = activeCourse.num + ' — ' + activeCourse.title;
+  document.getElementById('courseOverlay').classList.remove('show');
+  goToSection('intro');
+}
+
+document.getElementById('courseOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) document.getElementById('courseOverlay').classList.remove('show');
+});
+
+// ══════════════════════════════════════════════════
+//  AUTH GUARD
+// ══════════════════════════════════════════════════
+const API = '/api';
+function getToken() { return localStorage.getItem('bf_token'); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('bf_user')); } catch { return null; } }
+
+const user = getUser();
+const token = getToken();
+if (!user || !token) { window.location.href = '/'; }
+try {
+  const p = JSON.parse(atob(token.split('.')[1]));
+  if (p.exp * 1000 < Date.now()) { localStorage.clear(); window.location.href = '/'; }
+} catch { localStorage.clear(); window.location.href = '/'; }
+
+document.getElementById('userName').textContent = user.nome;
+document.getElementById('userAvatar').textContent = user.nome[0].toUpperCase();
+if (user.ruolo === 'admin') document.getElementById('btnAdmin').style.display = '';
+
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  await fetch(`${API}/auth/logout`, {
+    method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }
+  }).catch(()=>{});
+  localStorage.clear(); window.location.href = '/';
+});
+
+// ══════════════════════════════════════════════════
+//  ANALYTICS
+// ══════════════════════════════════════════════════
+let currentRecordId = null;
+async function trackIngresso(sectionId, sectionTitle) {
+  await trackUscita();
+  try {
+    const r = await fetch(`${API}/analytics/ingresso`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() },
+      body: JSON.stringify({ sezione_id: sectionId, sezione_titolo: sectionTitle })
+    });
+    if (r.ok) { const d = await r.json(); currentRecordId = d.id; }
+  } catch {}
+}
+async function trackUscita() {
+  if (!currentRecordId) return;
+  const id = currentRecordId; currentRecordId = null;
+  try {
+    await fetch(`${API}/analytics/uscita`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() },
+      body: JSON.stringify({ record_id: id })
+    });
+  } catch {}
+}
+window.addEventListener('beforeunload', () => {
+  if (currentRecordId)
+    navigator.sendBeacon(`${API}/analytics/uscita`,
+      new Blob([JSON.stringify({ record_id: currentRecordId })], { type:'application/json' }));
+});
+
+// ══════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════
+const SECTION_TITLES = {
+  intro:      'Cos\'è l\'OT?',
+  creation:   'Creazione OT',
+  lt06:       'Schermata LT06',
+  palletize:  'Pallettizzazione',
+  foreground: 'Esecuzione Foreground',
+  confirm:    'Conferma RF'
+};
+const sectionKeys = Object.keys(SECTION_TITLES);
+const readSet = new Set(JSON.parse(localStorage.getItem('bf_read') || '[]'));
+
+function goToSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-section]').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('section-' + id).classList.add('active');
+  const navEl = document.querySelector(`.nav-item[data-section="${id}"]`);
+  if (navEl) navEl.classList.add('active');
+
+  // progress bar
+  const idx = sectionKeys.indexOf(id);
+  document.getElementById('progressFill').style.width = Math.round((idx / (sectionKeys.length - 1)) * 100) + '%';
+
+  // mark as read
+  readSet.add(id);
+  localStorage.setItem('bf_read', JSON.stringify([...readSet]));
+  updateSidebarRead();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  trackIngresso(id, SECTION_TITLES[id]);
+}
+
+function updateSidebarRead() {
+  const pct = Math.round((readSet.size / sectionKeys.length) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progPct').textContent = pct + '%';
+  sectionKeys.forEach(id => {
+    const el = document.querySelector(`.nav-item[data-section="${id}"]`);
+    if (el && readSet.has(id)) el.classList.add('done');
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  TOOLTIP
+// ══════════════════════════════════════════════════
+function showTooltip(id, title, body, tip) {
+  document.getElementById('tooltipTag').textContent = 'Spiegazione Campo';
+  document.getElementById('tooltipTitle').textContent = title;
+  document.getElementById('tooltipBody').innerHTML = body;
+  if (tip) {
+    document.getElementById('tooltipTip').style.display = 'flex';
+    document.getElementById('tooltipTipText').textContent = tip;
+  } else {
+    document.getElementById('tooltipTip').style.display = 'none';
+  }
+  document.getElementById('tooltipOverlay').classList.add('visible');
+}
+function closeTooltip(e) { document.getElementById('tooltipOverlay').classList.remove('visible'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTooltip(); });
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+document.getElementById('headerCourseTitle').textContent = activeCourse.num + ' — ' + activeCourse.title;
+document.getElementById('sidebarCourseName').textContent = activeCourse.num + ' — ' + activeCourse.title;
+updateSidebarRead();
+trackIngresso('intro', SECTION_TITLES['intro']);
+</script>
+</body>
+</html>
