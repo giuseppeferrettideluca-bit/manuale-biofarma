@@ -315,12 +315,90 @@
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast-success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
     .toast-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+
+    /* ── Hamburger button (nascosto su desktop) ── */
+    .btn-hamburger {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 34px; height: 34px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .btn-hamburger:hover { border-color: var(--sap-blue); color: var(--sap-blue); }
+
+    /* Sidebar backdrop */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 49;
+      top: 56px;
+    }
+    .sidebar-backdrop.show { display: block; }
+
+    /* ═══════════════════════════════════════════════
+       MOBILE RESPONSIVE  ≤ 768px
+    ═══════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      /* ── Hamburger ── */
+      .btn-hamburger { display: flex; }
+
+      /* ── Topbar ── */
+      .topbar { padding: 0 14px; gap: 10px; }
+      .topbar-brand { font-size: 13px; }
+      .badge-admin { display: none; }
+      #userNameAdmin { display: none; }
+
+      /* ── Layout: sidebar + main in colonna ── */
+      .layout { flex-direction: column; }
+
+      /* ── Sidebar: drawer slide-in ── */
+      .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 56px;
+        width: 240px;
+        height: calc(100vh - 56px);
+        z-index: 50;
+        transition: left 0.3s ease;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+      }
+      .sidebar.open { left: 0; }
+
+      /* ── Main ── */
+      .main { padding: 20px 14px; }
+
+      /* ── Page title ── */
+      h2.page-title { font-size: 17px; }
+      .page-sub { font-size: 12px; margin-bottom: 18px; }
+
+      /* ── Card header: wrap su due righe ── */
+      .card-head { flex-wrap: wrap; gap: 8px; }
+      .card-head .card-action { font-size: 11px; padding: 6px 12px; }
+
+      /* ── Stat cards: 2 colonne su mobile ── */
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .stat-value { font-size: 24px; }
+
+      /* ── Toast: larghezza intera ── */
+      .toast { right: 12px; left: 12px; text-align: center; }
+
+      /* ── Modal: larghezza intera ── */
+      .modal { max-width: 100% !important; margin: 0 12px; }
+    }
   </style>
 </head>
 <body>
 
 <!-- Top bar -->
 <header class="topbar">
+  <button class="btn-hamburger" id="btnHamburger" onclick="toggleAdminSidebar()" aria-label="Menu">☰</button>
   <a href="/manuale" class="topbar-brand">
     <div class="ico">B</div>
     Biofarma Group
@@ -333,6 +411,9 @@
     <button class="btn-logout" id="btnLogoutAdmin">Esci</button>
   </div>
 </header>
+
+<!-- Sidebar backdrop (mobile) -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeAdminSidebar()"></div>
 
 <!-- Layout -->
 <div class="layout">
@@ -514,9 +595,20 @@ document.getElementById('btnLogoutAdmin').addEventListener('click', async () => 
   window.location.href = '/';
 });
 
+// ── Mobile sidebar (hamburger) ──
+function toggleAdminSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarBackdrop').classList.toggle('show');
+}
+function closeAdminSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('show');
+}
+
 // ── Navigation ──
 document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (window.innerWidth <= 768) closeAdminSidebar();
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));

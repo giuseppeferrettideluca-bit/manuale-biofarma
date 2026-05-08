@@ -594,6 +594,97 @@ body {
   border-radius:8px; padding:11px 13px; font-size:12px; color:#5dca7a;
   display:flex; gap:8px; align-items:flex-start;
 }
+
+/* ═══════════════════════════════════════════════
+   HAMBURGER BUTTON (nascosto su desktop)
+═══════════════════════════════════════════════ */
+.btn-hamburger {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  background: transparent;
+  border: 1px solid var(--sap-border);
+  border-radius: 6px;
+  color: var(--sap-muted);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.btn-hamburger:hover { border-color: var(--sap-blue); color: var(--sap-accent); }
+
+/* Sidebar backdrop (overlay mobile) */
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 149;
+  top: 51px;
+}
+.sidebar-backdrop.show { display: block; }
+
+/* ═══════════════════════════════════════════════
+   MOBILE RESPONSIVE  ≤ 768px
+═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Header ── */
+  .btn-hamburger { display: flex; }
+  .header { padding: 0 12px; gap: 8px; }
+  .header-title { display: none; }
+  .header-divider { display: none; }
+  .btn-courses { font-size: 11px; padding: 4px 8px; gap: 4px; }
+  .user-pill > span { display: none; }
+
+  /* ── Layout: colonna unica ── */
+  .layout { grid-template-columns: 1fr; }
+
+  /* ── Sidebar: drawer slide-in ── */
+  .sidebar {
+    position: fixed !important;
+    left: -300px;
+    top: 51px;
+    width: 280px;
+    height: calc(100vh - 51px);
+    z-index: 150;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.35);
+  }
+  .sidebar.open { left: 0; }
+
+  /* ── Main content ── */
+  .main { padding: 24px 16px; max-width: 100%; }
+
+  /* ── Tipografia ── */
+  .section-title { font-size: 22px; }
+  .section-sub { font-size: 13px; }
+
+  /* ── Info grid: 1 colonna ── */
+  .info-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Nav buttons: wrap ── */
+  .nav-buttons { flex-wrap: wrap; }
+  .nav-btn { flex: 1 1 140px; justify-content: center; }
+
+  /* ── SAP screen mock: scroll orizzontale ── */
+  .sap-screen { overflow-x: auto; }
+  .sap-toolbar { gap: 3px; flex-wrap: nowrap; overflow-x: auto; }
+  .sap-topbar-left span:not(:first-child) { display: none; }
+
+  /* ── Terminal RF ── */
+  .rf-screen { width: 100% !important; max-width: 260px; margin: 8px auto !important; }
+
+  /* ── Annotation legend ── */
+  .legend-items { flex-direction: column; }
+
+  /* ── Content block ── */
+  .content-block { padding: 16px; }
+
+  /* ── Course modal ── */
+  .course-grid { grid-template-columns: 1fr; }
+  .course-modal { padding: 24px 18px; }
+}
 </style>
 </head>
 <body>
@@ -630,6 +721,7 @@ body {
      SHELL BAR
 ══════════════════════════════════════════════════ -->
 <header class="header">
+  <button class="btn-hamburger" id="btnHamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
   <div class="logo-badge">SAP WM</div>
   <div class="header-divider"></div>
   <div class="header-title" id="headerCourseTitle">Manuale Interattivo</div>
@@ -644,6 +736,7 @@ body {
   <button class="btn-icon btn-logout" id="btnLogout">↩ Esci</button>
 </header>
 <div class="progress-strip"><div class="progress-fill" id="progressFill"></div></div>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
 <!-- ══════════════════════════════════════════════════
      LAYOUT
@@ -1346,7 +1439,20 @@ const SECTION_TITLES = {
 const sectionKeys = Object.keys(SECTION_TITLES);
 const readSet = new Set(JSON.parse(localStorage.getItem('bf_read') || '[]'));
 
+// ══════════════════════════════════════════════════
+//  MOBILE SIDEBAR (hamburger)
+// ══════════════════════════════════════════════════
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarBackdrop').classList.toggle('show');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('show');
+}
+
 function goToSection(id) {
+  if (window.innerWidth <= 768) closeSidebar();
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item[data-section]').forEach(n => n.classList.remove('active'));
 

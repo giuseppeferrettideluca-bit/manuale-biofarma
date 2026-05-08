@@ -177,6 +177,22 @@
       color: var(--text-muted);
     }
     .powered span { color: var(--text-secondary); }
+
+    /* ═══════════════════════════════════════════════
+       MOBILE RESPONSIVE  ≤ 768px
+    ═══════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      body { overflow-y: auto; }
+      .wrapper { padding: 16px; max-width: 100%; }
+      .brand { margin-bottom: 24px; }
+      .brand-icon { width: 48px; height: 48px; font-size: 22px; border-radius: 12px; }
+      .brand-name { font-size: 19px; }
+      .card { padding: 28px 20px; border-radius: 14px; }
+      .btn-role { padding: 14px 16px; gap: 12px; }
+      .role-icon { width: 40px; height: 40px; font-size: 18px; border-radius: 10px; }
+      .role-label { font-size: 14px; }
+      .role-desc { font-size: 11px; }
+    }
   </style>
 </head>
 <body>
