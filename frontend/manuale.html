@@ -694,16 +694,24 @@ body {
   .nav-btn { flex: 1 1 140px; justify-content: center; }
 
   /* ── SAP screen mock: scroll orizzontale + font ridotti ── */
-  .sap-screen { overflow-x: auto; max-width: 100%; }
-  .sap-toolbar { gap: 3px; flex-wrap: nowrap; overflow-x: auto; }
-  .sap-topbar-left span:not(:first-child) { display: none; }
-  .sap-body { padding: 8px 10px; font-size: 11px; }
-  .sap-field-row { gap: 6px; margin-bottom: 6px !important; }
-  .sap-field label { font-size: 10px; }
-  .sap-input { font-size: 10px; padding: 2px 5px; min-width: 60px; }
+  body { overflow-x: hidden; }
+  .sap-screen {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    max-width: calc(100vw - 32px);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .sap-toolbar { gap: 3px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .sap-topbar-left span:not(:first-child) { font-size: 9px; }
+  .sap-body { padding: 8px 10px; font-size: 11px; overflow-x: auto; }
+  .sap-field-row { gap: 4px; margin-bottom: 5px !important; flex-wrap: wrap; }
+  .sap-field { flex-wrap: wrap; }
+  .sap-field label { font-size: 10px; white-space: nowrap; }
+  .sap-input { font-size: 10px !important; padding: 2px 5px !important; min-width: 0 !important; width: auto !important; max-width: 150px !important; }
   .sap-section-title { font-size: 10px; }
   .sap-table { font-size: 9px; }
-  .sap-table th, .sap-table td { padding: 2px 4px; }
+  .sap-table th, .sap-table td { padding: 2px 4px; white-space: nowrap; }
   .sap-status { font-size: 10px; padding: 3px 8px; }
 
   /* ── Overlay testo e SAP screen: testo DOPO la finestra, gap adeguato ── */
