@@ -12,14 +12,14 @@
 :root {
   --sap-blue:    #0070f2;   /* sapBrandColor */
   --sap-blue-d:  #0040b0;
-  --sap-shell:   #fffde7;   /* sapShellColor — light yellow bg */
-  --sap-panel:   #fff9c4;   /* secondary surface */
-  --sap-card:    #fff8b0;   /* tile / card */
-  --sap-hover:   #fef08a;
-  --sap-border:  #f0d060;   /* neutral border */
-  --sap-text:    #1a1a0a;   /* primary text on light */
-  --sap-muted:   #6b6b30;   /* label color */
-  --sap-faint:   #a0a060;   /* placeholder / disabled */
+  --sap-shell:   #354a5e;   /* sapShellColor — SAP dark teal header */
+  --sap-panel:   #f7f7f7;   /* sfondo pagina grigio chiarissimo */
+  --sap-card:    #ffffff;   /* card/tile bianchi */
+  --sap-hover:   #e8f0fe;
+  --sap-border:  #d9d9d9;   /* bordo neutro grigio */
+  --sap-text:    #32363a;   /* testo scuro SAP */
+  --sap-muted:   #6a6d70;   /* label color */
+  --sap-faint:   #ababab;   /* placeholder / disabled */
   --sap-accent:  #0070f2;   /* informative / link */
   --sap-green:   #16a34a;
   --sap-orange:  #c2410c;
@@ -39,7 +39,7 @@
 
 body {
   font-family: 'IBM Plex Sans', sans-serif;
-  background: var(--sap-shell);
+  background: var(--sap-panel);
   color: var(--sap-text);
   min-height: 100vh;
   overflow-x: hidden;
@@ -137,7 +137,7 @@ body {
 .header {
   height: 48px;
   background: var(--sap-shell);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.15);
   padding: 0 24px;
   display: flex;
   align-items: center;
@@ -145,7 +145,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 .logo-badge {
   background: var(--sap-blue);
@@ -158,27 +158,28 @@ body {
   letter-spacing: 1px;
   flex-shrink: 0;
 }
-.header-title { font-size: 13px; color: rgba(209,224,240,0.6); font-weight: 300; }
-.header-divider { width: 1px; height: 20px; background: var(--sap-border); }
+/* Testo nell'header su sfondo scuro (#354a5e) */
+.header-title { font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 300; }
+.header-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.2); }
 .header-spacer { flex: 1; }
 
 .btn-courses {
   display: flex; align-items: center; gap: 6px;
   padding: 5px 12px;
-  background: rgba(0,112,242,0.12);
-  border: 1px solid rgba(0,112,242,0.35);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 6px;
-  color: var(--sap-accent);
+  color: rgba(255,255,255,0.85);
   font-size: 12px;
   font-family: 'IBM Plex Sans', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
 }
-.btn-courses:hover { background: rgba(0,112,242,0.22); }
+.btn-courses:hover { background: rgba(255,255,255,0.18); }
 
 .user-pill {
   display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--sap-muted);
+  font-size: 12px; color: rgba(255,255,255,0.8);
 }
 .user-avatar {
   width: 28px; height: 28px;
@@ -190,9 +191,9 @@ body {
 .btn-icon {
   padding: 5px 10px;
   background: transparent;
-  border: 1px solid var(--sap-border);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 6px;
-  color: var(--sap-muted);
+  color: rgba(255,255,255,0.75);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -201,13 +202,13 @@ body {
   display: inline-block;
   white-space: nowrap;
 }
-.btn-icon:hover { border-color: var(--sap-blue); color: var(--sap-accent); }
-.btn-logout:hover { border-color: #e05; color: #f87; }
+.btn-icon:hover { border-color: rgba(255,255,255,0.6); color: #fff; }
+.btn-logout:hover { border-color: #f87; color: #f87; }
 
 /* Reading progress strip */
 .progress-strip {
   height: 3px;
-  background: var(--sap-border);
+  background: rgba(53,74,94,0.15);
   position: sticky;
   top: 48px;
   z-index: 99;
@@ -308,17 +309,42 @@ body {
 .nav-item.done .nav-num { color: var(--sap-green); }
 .nav-item.done .nav-num::before { content: '✓ '; }
 
+/* ── Statistiche sidebar (2×2 card grid) ── */
+.sidebar-stats {
+  margin: 0 12px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.stat-mini {
+  background: var(--sap-card);
+  border: 1px solid var(--sap-border);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.stat-mini-icon { font-size: 14px; line-height: 1; margin-bottom: 4px; }
+.stat-mini-num {
+  font-size: 20px; font-weight: 700;
+  color: var(--sap-text); line-height: 1;
+}
+.stat-mini-label {
+  font-size: 9px; color: var(--sap-faint);
+  margin-top: 3px; letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
 /* Progress footer */
 .sidebar-progress {
   margin-top: auto;
-  padding: 16px 20px 0;
+  padding: 14px 20px 0;
   border-top: 1px solid var(--sap-border);
 }
 .prog-label {
   display: flex; justify-content: space-between;
   font-size: 11px; color: var(--sap-faint); margin-bottom: 6px;
 }
-.prog-bar { height: 3px; background: var(--sap-border); border-radius: 3px; overflow: hidden; }
+.prog-bar { height: 4px; background: var(--sap-border); border-radius: 3px; overflow: hidden; }
 .prog-fill { height: 100%; background: linear-gradient(90deg, var(--sap-blue), var(--sap-accent)); border-radius: 3px; transition: width 0.5s ease; }
 
 /* ═══════════════════════════════════════════════
@@ -667,10 +693,29 @@ body {
   .nav-buttons { flex-wrap: wrap; }
   .nav-btn { flex: 1 1 140px; justify-content: center; }
 
-  /* ── SAP screen mock: scroll orizzontale ── */
-  .sap-screen { overflow-x: auto; }
+  /* ── SAP screen mock: scroll orizzontale + font ridotti ── */
+  .sap-screen { overflow-x: auto; max-width: 100%; }
   .sap-toolbar { gap: 3px; flex-wrap: nowrap; overflow-x: auto; }
   .sap-topbar-left span:not(:first-child) { display: none; }
+  .sap-body { padding: 8px 10px; font-size: 11px; }
+  .sap-field-row { gap: 6px; margin-bottom: 6px !important; }
+  .sap-field label { font-size: 10px; }
+  .sap-input { font-size: 10px; padding: 2px 5px; min-width: 60px; }
+  .sap-section-title { font-size: 10px; }
+  .sap-table { font-size: 9px; }
+  .sap-table th, .sap-table td { padding: 2px 4px; }
+  .sap-status { font-size: 10px; padding: 3px 8px; }
+
+  /* ── Overlay testo e SAP screen: testo DOPO la finestra, gap adeguato ── */
+  .annotation-legend { margin-top: 12px; padding: 10px 12px; }
+  .legend-items { flex-direction: column; gap: 6px; }
+  .sap-screen + .annotation-legend { margin-top: 16px; }
+  .content-block + .sap-screen,
+  .sap-screen ~ .annotation-legend,
+  .sap-screen ~ .content-block,
+  .sap-screen ~ .nav-buttons {
+    margin-top: 16px;
+  }
 
   /* ── Terminal RF ── */
   .rf-screen { width: 100% !important; max-width: 260px; margin: 8px auto !important; }
@@ -775,6 +820,27 @@ body {
     <div class="nav-item" data-section="confirm" onclick="goToSection('confirm')">
       <div class="nav-ico">✅</div> Conferma RF
       <span class="nav-num">06</span>
+    </div>
+
+    <!-- Statistiche utente (2×2 card grid) -->
+    <div class="sidebar-stats">
+      <div class="stat-mini">
+        <div class="stat-mini-icon">📚</div>
+        <div class="stat-mini-num" id="statSezioni">0</div>
+        <div class="stat-mini-label">Sezioni</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-icon">✓</div>
+        <div class="stat-mini-num" id="statPct">0%</div>
+        <div class="stat-mini-label">Completato</div>
+      </div>
+      <div class="stat-mini" style="grid-column:1/-1;">
+        <div class="stat-mini-icon">⏱</div>
+        <div style="height:4px;background:var(--sap-border);border-radius:3px;margin:6px 0 2px;overflow:hidden;">
+          <div id="statProgBar" style="height:100%;background:linear-gradient(90deg,var(--sap-blue),var(--sap-accent));width:0%;transition:width 0.5s ease;border-radius:3px;"></div>
+        </div>
+        <div class="stat-mini-label">Avanzamento corso</div>
+      </div>
     </div>
 
     <div class="sidebar-progress">
@@ -1371,16 +1437,25 @@ document.getElementById('courseOverlay').addEventListener('click', (e) => {
 //  AUTH GUARD
 // ══════════════════════════════════════════════════
 const API = '/api';
-function getToken() { return localStorage.getItem('bf_token'); }
-function getUser()  { try { return JSON.parse(localStorage.getItem('bf_user')); } catch { return null; } }
+// Controlla prima localStorage (resta connesso), poi sessionStorage (sessione singola)
+function getToken() { return localStorage.getItem('bf_token') || sessionStorage.getItem('bf_token'); }
+function getUser()  {
+  try {
+    return JSON.parse(localStorage.getItem('bf_user') || sessionStorage.getItem('bf_user'));
+  } catch { return null; }
+}
+function clearAuth() {
+  localStorage.removeItem('bf_token'); localStorage.removeItem('bf_user');
+  sessionStorage.removeItem('bf_token'); sessionStorage.removeItem('bf_user');
+}
 
 const user = getUser();
 const token = getToken();
 if (!user || !token) { window.location.href = '/'; }
 try {
   const p = JSON.parse(atob(token.split('.')[1]));
-  if (p.exp * 1000 < Date.now()) { localStorage.clear(); window.location.href = '/'; }
-} catch { localStorage.clear(); window.location.href = '/'; }
+  if (p.exp * 1000 < Date.now()) { clearAuth(); window.location.href = '/'; }
+} catch { clearAuth(); window.location.href = '/'; }
 
 document.getElementById('userName').textContent = user.nome;
 document.getElementById('userAvatar').textContent = user.nome[0].toUpperCase();
@@ -1388,9 +1463,9 @@ if (user.ruolo === 'admin') document.getElementById('btnAdmin').style.display = 
 
 document.getElementById('btnLogout').addEventListener('click', async () => {
   await fetch(`${API}/auth/logout`, {
-    method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }
+    method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() }
   }).catch(()=>{});
-  localStorage.clear(); window.location.href = '/';
+  clearAuth(); window.location.href = '/';
 });
 
 // ══════════════════════════════════════════════════
@@ -1477,6 +1552,13 @@ function updateSidebarRead() {
   const pct = Math.round((readSet.size / sectionKeys.length) * 100);
   document.getElementById('progFill').style.width = pct + '%';
   document.getElementById('progPct').textContent = pct + '%';
+  // Aggiorna stat card
+  const statSezioni = document.getElementById('statSezioni');
+  const statPct = document.getElementById('statPct');
+  const statProgBar = document.getElementById('statProgBar');
+  if (statSezioni) statSezioni.textContent = readSet.size;
+  if (statPct) statPct.textContent = pct + '%';
+  if (statProgBar) statProgBar.style.width = pct + '%';
   sectionKeys.forEach(id => {
     const el = document.querySelector(`.nav-item[data-section="${id}"]`);
     if (el && readSet.has(id)) el.classList.add('done');
