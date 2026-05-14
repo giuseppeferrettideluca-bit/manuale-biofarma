@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generare Mockup Interattivi con AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e5edff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        accent: {
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .section-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .step-active {
+            border-left-color: #7c3aed !important;
+            background-color: #f5f3ff;
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* Password overlay */
+        #password-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #password-overlay.hidden { display: none; }
+
+        #pw-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(139,92,246,0.4); }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20%,60% { transform: translateX(-8px); }
+            40%,80% { transform: translateX(8px); }
+        }
+        .shake { animation: shake 0.4s ease; }
+
+        /* Ideas list */
+        .idea-card {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-slate-50">
+
+    <!-- ===== PASSWORD OVERLAY ===== -->
+    <div id="password-overlay">
+        <div class="w-full max-w-sm mx-4">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-2xl mb-4">
+                    <i data-lucide="bot" class="w-8 h-8 text-purple-400"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-1">AI Mockup Academy</h1>
+                <p class="text-blue-200 text-sm">Accesso riservato ai colleghi</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <label class="block text-sm font-medium text-blue-100 mb-2">Password di accesso</label>
+                <div class="relative mb-4">
+                    <input
+                        type="password"
+                        id="pw-input"
+                        placeholder="Inserisci la password..."
+                        class="w-full bg-white/10 border border-white/30 text-white placeholder-white/40 rounded-xl px-4 py-3 text-sm transition-all"
+                        onkeydown="if(event.key==='Enter') checkPassword()"
+                    />
+                    <button onclick="togglePwVisibility()" class="absolute right-3 top-3 text-white/50 hover:text-white transition-colors">
+                        <i id="pw-eye" data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div id="pw-error" class="text-red-300 text-xs mb-3 hidden">Password non corretta. Riprova.</div>
+                <button
+                    onclick="checkPassword()"
+                    class="w-full bg-accent-600 hover:bg-accent-500 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                    <i data-lucide="unlock" class="w-4 h-4"></i> Accedi al Manuale
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-brand-900 text-white flex flex-col shadow-xl z-20 flex-shrink-0">
+        <div class="p-6 border-b border-brand-800">
+            <div class="flex items-center gap-3">
+                <i data-lucide="bot" class="w-8 h-8 text-accent-500"></i>
+                <h1 class="font-bold text-lg leading-tight">AI Mockup<br>Academy</h1>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4 custom-scrollbar">
+            <ul class="space-y-1 px-3" id="nav-menu"></ul>
+        </nav>
+
+        <div class="p-4 border-t border-brand-800 text-xs text-brand-100/60">
+            Manuale Operativo per i Colleghi<br>
+            Gemini Pro · Claude · ChatGPT
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+        <header class="bg-white border-b border-slate-200 h-16 flex items-center px-8 flex-shrink-0 shadow-sm z-10">
+            <h2 id="current-section-title" class="text-xl font-semibold text-slate-800">Panoramica del Manuale</h2>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-5xl mx-auto">
+
+                <!-- 1. HOME / OVERVIEW -->
+                <section id="sec-home" class="section-content active">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 mb-8 text-center relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-accent-500 rounded-full blur-[80px] opacity-10 -mr-20 -mt-20 pointer-events-none"></div>
+                        <div class="absolute bottom-0 left-0 w-64 h-64 bg-brand-500 rounded-full blur-[80px] opacity-10 -ml-20 -mb-20 pointer-events-none"></div>
+
+                        <div class="inline-flex items-center justify-center p-4 bg-brand-50 rounded-2xl mb-6">
+                            <i data-lucide="layout-template" class="w-12 h-12 text-brand-600"></i>
+                        </div>
+                        <h1 class="text-4xl font-bold text-slate-900 mb-4">Generare Mockup Interattivi con AI</h1>
+                        <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
+                            Manuale Operativo: dal Prompt al Prototipo con Gemini Pro Canvas, Claude e ChatGPT.
+                        </p>
+
+                        <div class="flex flex-wrap justify-center gap-4 mb-10">
+                            <div class="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium text-slate-700">
+                                <i data-lucide="book-open" class="w-4 h-4 text-slate-500"></i> Formato: Manuale
+                            </div>
+                            <div class="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium text-slate-700">
+                                <i data-lucide="target" class="w-4 h-4 text-slate-500"></i> Livello: Intermedio
+                            </div>
+                            <div class="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium text-slate-700">
+                                <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i> 7 Fasi Operative
+                            </div>
+                        </div>
+
+                        <button onclick="navigateTo('sec-journey')" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center gap-2 mx-auto">
+                            Esplora il Manuale <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-semibold text-lg mb-2 flex items-center gap-2"><i data-lucide="lightbulb" class="w-5 h-5 text-amber-500"></i> L'Obiettivo</h3>
+                            <p class="text-slate-600 text-sm">Strutturare un processo di lavoro efficace e ripetibile per la prototipazione rapida di interfacce interattive in HTML/CSS/JS.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-semibold text-lg mb-2 flex items-center gap-2"><i data-lucide="cpu" class="w-5 h-5 text-accent-500"></i> La Tecnologia</h3>
+                            <p class="text-slate-600 text-sm">Sfruttare le capacità di reasoning di Claude/ChatGPT per creare prompt perfetti, e il tool Canvas di Gemini Pro per generare il codice.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-semibold text-lg mb-2 flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i> Il Risultato</h3>
+                            <p class="text-slate-600 text-sm">Applicazioni navigabili a pagina singola, pronte per demo ai clienti o test utente, ottenute in una frazione del tempo tradizionale.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. INTERACTIVE PROCESS JOURNEY -->
+                <section id="sec-journey" class="section-content">
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                            <div class="p-4 border-b border-slate-100 bg-slate-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="font-semibold text-slate-800">Checklist Operativa</h3>
+                                    <span id="journey-progress-text" class="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">0/7</span>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-1.5">
+                                    <div id="journey-progress-bar" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col flex-1 overflow-y-auto custom-scrollbar" id="journey-stepper" style="max-height: 500px;"></div>
+                        </div>
+
+                        <div class="w-full md:w-2/3 bg-white rounded-xl shadow-sm border border-slate-200 p-8 relative min-h-[400px] flex flex-col">
+                            <div id="journey-detail-content" class="flex-1"></div>
+                            <div id="journey-detail-action" class="mt-6 pt-6 border-t border-slate-100"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. TOOL MAP -->
+                <section id="sec-tools" class="section-content">
+                    <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                        <p class="text-sm text-blue-800 flex items-start gap-2">
+                            <i data-lucide="info" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>Nota bene:</strong> Gemini PRO è l'unico strumento a pagamento obbligatorio per questo workflow. Tutti gli altri passaggi funzionano perfettamente con le versioni gratuite di Claude e ChatGPT.</span>
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="tools-grid"></div>
+                </section>
+
+                <!-- 4. PROMPT LIBRARY -->
+                <section id="sec-prompts" class="section-content">
+                    <p class="text-slate-600 mb-6">Usa questi template come base per le tue interazioni con l'AI. I prompt sono ottimizzati per guidare la LLM verso risultati strutturati e codice pulito.</p>
+                    <div class="space-y-6" id="prompt-accordion"></div>
+                </section>
+
+                <!-- 5. FLUSSO DI LAVORO -->
+                <section id="sec-agenda" class="section-content">
+                    <div class="max-w-3xl mx-auto relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent" id="agenda-timeline"></div>
+                </section>
+
+                <!-- 6. COMING SOON -->
+                <section id="sec-coming-soon" class="section-content">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center relative overflow-hidden mb-8">
+                        <div class="absolute top-0 right-0 w-72 h-72 bg-accent-500 rounded-full blur-[100px] opacity-10 -mr-24 -mt-24 pointer-events-none"></div>
+                        <div class="absolute bottom-0 left-0 w-72 h-72 bg-brand-500 rounded-full blur-[100px] opacity-10 -ml-24 -mb-24 pointer-events-none"></div>
+
+                        <div class="inline-flex items-center justify-center p-4 bg-amber-50 rounded-2xl mb-6 border border-amber-100">
+                            <i data-lucide="rocket" class="w-12 h-12 text-amber-500"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold text-slate-900 mb-3">Prossimamente</h1>
+                        <p class="text-slate-500 max-w-xl mx-auto mb-8">
+                            Questa sezione è in costruzione. Tornerò ad aggiungerci le nuove scoperte, casi d'uso avanzati e tecniche inedite man mano che le esploreremo insieme.
+                        </p>
+
+                        <div class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-full text-sm font-medium">
+                            <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+                            Contenuti in arrivo...
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="coming-soon-grid">
+                        <!-- Placeholder cards -->
+                        <div class="bg-white rounded-xl border border-dashed border-slate-300 p-6 text-center opacity-60 hover:opacity-80 transition-opacity">
+                            <div class="w-10 h-10 bg-slate-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                                <i data-lucide="zap" class="w-5 h-5 text-slate-400"></i>
+                            </div>
+                            <h4 class="font-semibold text-slate-600 text-sm mb-1">Tecniche Avanzate</h4>
+                            <p class="text-xs text-slate-400">Prompt multi-step, chain-of-thought applicato ai mockup.</p>
+                        </div>
+                        <div class="bg-white rounded-xl border border-dashed border-slate-300 p-6 text-center opacity-60 hover:opacity-80 transition-opacity">
+                            <div class="w-10 h-10 bg-slate-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                                <i data-lucide="video" class="w-5 h-5 text-slate-400"></i>
+                            </div>
+                            <h4 class="font-semibold text-slate-600 text-sm mb-1">Casi Reali</h4>
+                            <p class="text-xs text-slate-400">Esempi concreti da progetti interni con walkthrough dettagliati.</p>
+                        </div>
+                        <div class="bg-white rounded-xl border border-dashed border-slate-300 p-6 text-center opacity-60 hover:opacity-80 transition-opacity">
+                            <div class="w-10 h-10 bg-slate-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                                <i data-lucide="git-branch" class="w-5 h-5 text-slate-400"></i>
+                            </div>
+                            <h4 class="font-semibold text-slate-600 text-sm mb-1">Nuovi Tool</h4>
+                            <p class="text-xs text-slate-400">Aggiornamenti sui nuovi modelli e strumenti AI da sperimentare.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. HAI UN'IDEA? -->
+                <section id="sec-ideas" class="section-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                        <!-- Submit Form -->
+                        <div>
+                            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="p-2.5 bg-accent-500/10 rounded-xl">
+                                        <i data-lucide="lightbulb" class="w-6 h-6 text-accent-600"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-xl font-bold text-slate-800">Hai un'idea?</h2>
+                                        <p class="text-sm text-slate-500">Condividila con i colleghi</p>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Il tuo nome <span class="text-slate-400 font-normal">(opzionale)</span></label>
+                                        <input
+                                            type="text"
+                                            id="idea-author"
+                                            placeholder="Es. Mario R."
+                                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 focus:border-accent-400 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1.5">La tua idea <span class="text-red-400">*</span></label>
+                                        <textarea
+                                            id="idea-text"
+                                            rows="5"
+                                            placeholder="Descrivi la tua idea, cosa vorresti esplorare o capire come fare con l'AI..."
+                                            class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent-500/30 focus:border-accent-400 transition-all resize-none"
+                                        ></textarea>
+                                    </div>
+
+                                    <button
+                                        onclick="submitIdea()"
+                                        id="idea-submit-btn"
+                                        class="w-full bg-accent-600 hover:bg-accent-500 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                    >
+                                        <i data-lucide="send" class="w-4 h-4"></i> Invia la tua idea
+                                    </button>
+
+                                    <div id="idea-success" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm px-4 py-3 rounded-xl flex items-center gap-2">
+                                        <i data-lucide="check-circle" class="w-4 h-4 flex-shrink-0"></i>
+                                        Idea inviata! Grazie per il contributo.
+                                    </div>
+                                    <div id="idea-error" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+                                        Scrivi almeno la tua idea prima di inviare.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                <p class="text-xs text-blue-700 flex items-start gap-2">
+                                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                                    Le idee sono visibili a tutti i colleghi che accedono al manuale. Usa questo spazio per condividere cose da esplorare, domande aperte o spunti di sperimentazione.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Ideas List -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-slate-700 flex items-center gap-2">
+                                    <i data-lucide="messages-square" class="w-4 h-4 text-accent-500"></i>
+                                    Idee dei Colleghi
+                                </h3>
+                                <button onclick="loadIdeas()" class="text-xs text-slate-500 hover:text-accent-600 flex items-center gap-1 transition-colors">
+                                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Aggiorna
+                                </button>
+                            </div>
+
+                            <div id="ideas-list" class="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
+                                <div class="text-center py-12 text-slate-400">
+                                    <i data-lucide="loader" class="w-6 h-6 mx-auto mb-2 animate-spin"></i>
+                                    <p class="text-sm">Caricamento idee...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="toast">Prompt copiato negli appunti!</div>
+
+    <script>
+        // --- DATA ---
+        const navigation = [
+            { id: 'sec-home', icon: 'home', title: 'Home / Overview' },
+            { id: 'sec-journey', icon: 'route', title: 'Process Journey' },
+            { id: 'sec-tools', icon: 'wrench', title: 'Tool Map' },
+            { id: 'sec-prompts', icon: 'terminal-square', title: 'Prompt Library' },
+            { id: 'sec-agenda', icon: 'git-merge', title: 'Flusso di Lavoro' },
+            { id: 'sec-coming-soon', icon: 'rocket', title: 'Prossimamente' },
+            { id: 'sec-ideas', icon: 'lightbulb', title: 'Hai un\'idea?' },
+        ];
+
+        const journeyPhases = [
+            {
+                title: "1. Documento delle Idee",
+                desc: "Scrivi tutto su Word — idee, obiettivi, struttura del mockup e prima bozza del prompt.",
+                why: "L'AI non legge la mente. Questo passaggio obbliga a mettere ordine nei pensieri e definire il perimetro (target, funzionalità, stile).",
+                tool: "Word / Notion",
+                tips: "Non serve essere tecnici. Scrivi in modo naturale come se spiegassi il progetto a un collega."
+            },
+            {
+                title: "2. Raccolta Documentazione",
+                desc: "Raccogli tutti i documenti di riferimento disponibili: specifiche, brief, dati, contenuti.",
+                why: "Più dati reali fornisci all'AI, più il prototipo sarà coerente con la realtà ed eviterà il temuto effetto 'Lorem Ipsum'.",
+                tool: "File system / Cartella progetto",
+                tips: "Claude/ChatGPT sintetizzano grandi moli di dati. Non filtrare troppo, ma attenzione ai dati sensibili/riservati."
+            },
+            {
+                title: "3. Materiale Grafico",
+                desc: "Trova esempi visivi simili per definire grafica, font, colori e stile dell'interfaccia.",
+                why: "Il risultato visivo dipende dalle indicazioni. Riferimenti chiari garantiscono UI moderne e non template anni 2000.",
+                tool: "Dribbble, Behance, Mobbin",
+                tips: "Descrivi a parole o salva screenshot. Es: 'Stile tipo Notion, sans-serif scuro, molto spazio bianco, flat design'."
+            },
+            {
+                title: "4. Elaborazione Prompt",
+                desc: "Usa un AI testuale per trasformare il documento grezzo in un prompt strutturato.",
+                why: "Gemini Canvas ha bisogno di istruzioni perfette per scrivere codice al primo colpo. Un LLM 'traduttore' è essenziale.",
+                tool: "Claude / ChatGPT (Gratuiti)",
+                tips: "Fornisci all'AI il documento (Fase 1), i dati (Fase 2) e lo stile (Fase 3). Chiedi un 'prompt tecnico per HTML singolo'."
+            },
+            {
+                title: "5. Generazione Canvas",
+                desc: "Incolla il prompt elaborato in Gemini PRO con tool Canvas.",
+                why: "Canvas è un ambiente specializzato che genera, renderizza in tempo reale e permette modifiche mirate sul codice.",
+                tool: "Gemini Pro + Canvas (Obbligatorio)",
+                tips: "Seleziona esplicitamente il modello PRO e assicurati che si apra l'interfaccia a doppio pannello (chat a sinistra, app a destra)."
+            },
+            {
+                title: "6. Controllo Output",
+                desc: "Verifica strutturata: sezioni presenti, logica, navigazione, coerenza.",
+                why: "Il primo output non è mai perfetto. Capire cosa non va è propedeutico alla revisione mirata.",
+                tool: "Browser (Chrome/Edge)",
+                tips: "Salva il file HTML in locale e aprilo. Il browser reale rivela comportamenti diversi rispetto all'anteprima Canvas."
+            },
+            {
+                title: "7. Revisioni Iterative",
+                desc: "Ciclo di miglioramento: salva HTML → Claude analizza → Genera prompt revisione → Gemini applica.",
+                why: "Previene le 'allucinazioni' di Gemini in chat lunghe. Claude legge il codice e dice a Gemini esattamente dove e cosa toccare.",
+                tool: "Claude (Analisi) + Gemini (Esecuzione)",
+                tips: "Richiedi a Claude un 'prompt di revisione', non farti riscrivere tutto il codice HTML da lui."
+            }
+        ];
+
+        const toolsMap = [
+            { name: "Microsoft Word / Notion", role: "Documento iniziale delle idee e definizione requisiti grezzi.", req: "Qualsiasi versione", type: "opzionale", icon: "file-text" },
+            { name: "Claude", role: "Scrittura del documento narrativo e della visione di progetto.", req: "Versione Gratuita", type: "consigliato", icon: "message-square" },
+            { name: "ChatGPT", role: "Elaborazione chirurgica del Prompt Master in base al documento di Claude.", req: "Versione Gratuita", type: "consigliato", icon: "bot" },
+            { name: "Gemini Pro + Canvas", role: "Motore di generazione del codice e ambiente di rendering interattivo del mockup.", req: "PRO (Obbligatorio)", type: "obbligatorio", icon: "code" },
+            { name: "Browser Web", role: "Test reale del mockup HTML scaricato per verificare responsività e logiche JS.", req: "Chrome/Edge", type: "obbligatorio", icon: "chrome" }
+        ];
+
+        const promptsDB = [
+            {
+                category: "1. Prompt di Visione (da usare su Claude)",
+                desc: "Usa questo prompt dando in pasto a Claude i tuoi appunti grezzi per generare 'la storia' del progetto.",
+                code: `Agisci come un Product Manager visionario.\n\nIn allegato trovi i miei appunti sparsi e le idee di base per un nuovo progetto.\n\nIl tuo compito è scrivere un documento narrativo e descrittivo che spieghi "la storia dell'azione": qual è l'obiettivo finale, chi è l'utente target, quale problema risolve e qual è l'esperienza generale che vogliamo offrire.\n\nNON scrivere specifiche tecniche, struttura di pagine o codice. Concentrati esclusivamente sulla visione di prodotto, sui flussi utente e sul contesto aziendale.`
+            },
+            {
+                category: "2. Prompt Master Generator (da usare su ChatGPT)",
+                desc: "Usa questo prompt fornendo a ChatGPT il documento prodotto da Claude al passo precedente.",
+                code: `Agisci come un Senior Prompt Engineer specializzato in UI/UX.\n\nIn allegato trovi un "Documento di Visione" del progetto che spiega la storia e l'obiettivo dell'azione da intraprendere.\n\nIl tuo compito è creare un "Prompt Master" chirurgico e complementare a questo documento, che io andrò poi a fornire a Gemini Pro Canvas per fargli generare il codice HTML del mockup.\n\nIl prompt che genererai dovrà istruire Gemini in modo rigido a:\n1. Basarsi strettamente sul documento di visione che gli verrà allegato.\n2. Creare una singola pagina HTML, includendo CSS (Tailwind) e Javascript Vanilla.\n3. Implementare un'interfaccia coerente, professionale e interattiva.\n\nRestituisci SOLO il testo del prompt pronto da copiare.`
+            },
+            {
+                category: "3. Prompt di Revisione Standard (da usare su Claude o ChatGPT)",
+                desc: "Prompt fisso e chirurgico per individuare le mancanze. Fornisci il documento di visione, le immagini e il codice HTML.",
+                code: `Agisci come un QA e UI/UX Reviewer estremamente pignolo e analitico.\n\nTi fornisco in allegato:\n1. Il documento di visione originale del progetto.\n2. Le immagini di riferimento stilistico.\n3. Il codice HTML generato finora.\n\nAnalizza tutto in modo incrociato e dimmi in modo diretto e chirurgico:\n- Cosa NON è stato fatto bene nel codice generato?\n- Cosa MANCA rispetto alla storia e agli obiettivi del documento originale?\n- Quali dettagli e finezze (funzionali o grafici) sono stati dimenticati?\n\nDopo la tua analisi, forniscimi il prompt ESATTO e chirurgico che dovrò dare a Gemini per correggere SOLO ed ESATTAMENTE queste mancanze, senza che stravolga ciò che ha già fatto bene.`
+            }
+        ];
+
+        const agendaData = [
+            { time: "00:00 - 00:05", title: "Introduzione", desc: "Obiettivi del corso, mindset e presentazione degli strumenti." },
+            { time: "00:05 - 00:15", title: "Preparazione Input (Fasi 1-3)", desc: "Come scrivere il documento Word e raccogliere dati utili." },
+            { time: "00:15 - 00:25", title: "Prompt Engineering (Fase 4)", desc: "Utilizzo di Claude/ChatGPT per generare il Master Prompt." },
+            { time: "00:25 - 00:40", title: "Gemini Canvas (Fase 5-6)", desc: "Generazione live del mockup e ispezione visiva del risultato." },
+            { time: "00:40 - 00:50", title: "Revisione Strutturata (Fase 7)", desc: "Il ciclo Claude-Gemini per fixare bug senza rompere il codice." },
+            { time: "00:50 - 01:00", title: "Q&A e Takeaways", desc: "Domande aperte, salvataggio dei prompt e conclusioni." }
+        ];
+
+        // --- APP STATE ---
+        let activeJourneyStep = 0;
+
+        // ==============================
+        //  PASSWORD PROTECTION
+        // ==============================
+        const CORRECT_PASSWORD = 'Kpmg@Kpmg';
+
+        function checkPassword() {
+            const input = document.getElementById('pw-input').value;
+            const errorEl = document.getElementById('pw-error');
+            const overlay = document.getElementById('password-overlay');
+
+            if (input === CORRECT_PASSWORD) {
+                sessionStorage.setItem('ai_manual_auth', '1');
+                overlay.classList.add('hidden');
+            } else {
+                errorEl.classList.remove('hidden');
+                const pwBox = document.getElementById('pw-input').parentElement;
+                pwBox.classList.add('shake');
+                setTimeout(() => pwBox.classList.remove('shake'), 400);
+            }
+        }
+
+        function togglePwVisibility() {
+            const input = document.getElementById('pw-input');
+            const icon = document.getElementById('pw-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons({ nodes: [icon] });
+        }
+
+        // ==============================
+        //  IDEAS API
+        // ==============================
+        async function loadIdeas() {
+            const list = document.getElementById('ideas-list');
+            try {
+                const res = await fetch('/api/ideas');
+                const ideas = await res.json();
+
+                if (ideas.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-center py-12 text-slate-400">
+                            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                            <p class="text-sm">Nessuna idea ancora. Sii il primo!</p>
+                        </div>
+                    `;
+                    lucide.createIcons({ root: list });
+                    return;
+                }
+
+                list.innerHTML = ideas.map(idea => `
+                    <div class="idea-card bg-white rounded-xl border border-slate-200 p-4 hover:shadow-sm transition-shadow">
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 bg-accent-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="text-xs font-bold text-accent-600">${(idea.author || 'A').charAt(0).toUpperCase()}</span>
+                                </div>
+                                <span class="text-xs font-semibold text-slate-600">${idea.author || 'Anonimo'}</span>
+                            </div>
+                            <span class="text-xs text-slate-400 flex-shrink-0">${formatDate(idea.created_at)}</span>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed pl-9">${escapeHtml(idea.text)}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Errore nel caricamento. Riprova.</div>`;
+            }
+        }
+
+        async function submitIdea() {
+            const author = document.getElementById('idea-author').value.trim();
+            const text = document.getElementById('idea-text').value.trim();
+            const errorEl = document.getElementById('idea-error');
+            const successEl = document.getElementById('idea-success');
+            const btn = document.getElementById('idea-submit-btn');
+
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+
+            if (!text) {
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Invio in corso...`;
+            lucide.createIcons({ root: btn });
+
+            try {
+                const res = await fetch('/api/ideas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ author, text })
+                });
+
+                if (res.ok) {
+                    successEl.classList.remove('hidden');
+                    lucide.createIcons({ root: successEl });
+                    document.getElementById('idea-author').value = '';
+                    document.getElementById('idea-text').value = '';
+                    loadIdeas();
+                } else {
+                    errorEl.textContent = 'Errore durante l\'invio. Riprova.';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorEl.textContent = 'Errore di rete. Controlla la connessione.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Invia la tua idea`;
+                lucide.createIcons({ root: btn });
+            }
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+        }
+
+        // ==============================
+        //  INIT
+        // ==============================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check session auth
+            if (sessionStorage.getItem('ai_manual_auth') === '1') {
+                document.getElementById('password-overlay').classList.add('hidden');
+            }
+
+            renderNavigation();
+            renderJourney();
+            renderTools();
+            renderPrompts();
+            renderAgenda();
+            lucide.createIcons();
+
+            const hash = window.location.hash.replace('#', '');
+            if (hash && navigation.find(n => n.id === hash)) {
+                navigateTo(hash);
+            } else {
+                navigateTo('sec-home');
+            }
+        });
+
+        // ==============================
+        //  NAVIGATION
+        // ==============================
+        function navigateTo(sectionId) {
+            history.pushState(null, null, `#${sectionId}`);
+
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('#nav-menu li a').forEach(el => {
+                el.classList.remove('bg-brand-800', 'text-white', 'border-accent-500');
+                el.classList.add('text-brand-100/70', 'border-transparent');
+                el.classList.remove('border-l-4');
+            });
+
+            const activeLink = document.querySelector(`a[onclick="navigateTo('${sectionId}')"]`);
+            if (activeLink) {
+                activeLink.classList.remove('text-brand-100/70', 'border-transparent');
+                activeLink.classList.add('bg-brand-800', 'text-white', 'border-l-4', 'border-accent-500');
+            }
+
+            const navItem = navigation.find(n => n.id === sectionId);
+            if (navItem) document.getElementById('current-section-title').innerText = navItem.title;
+
+            // Load ideas when navigating to that section
+            if (sectionId === 'sec-ideas') loadIdeas();
+        }
+
+        // ==============================
+        //  RENDER FUNCTIONS
+        // ==============================
+        function renderNavigation() {
+            const menu = document.getElementById('nav-menu');
+
+            // Add separator before new sections
+            navigation.forEach((item, idx) => {
+                if (idx === 5) {
+                    const sep = document.createElement('li');
+                    sep.innerHTML = `<div class="px-4 pt-3 pb-1"><div class="border-t border-brand-800"></div></div>`;
+                    menu.appendChild(sep);
+                }
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="javascript:void(0)" onclick="navigateTo('${item.id}')" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors border-transparent hover:bg-brand-800 hover:text-white text-brand-100/70 font-medium text-sm">
+                        <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+                        ${item.title}
+                    </a>
+                `;
+                menu.appendChild(li);
+            });
+        }
+
+        function renderJourney() {
+            const stepper = document.getElementById('journey-stepper');
+            stepper.innerHTML = '';
+            journeyPhases.forEach((phase, index) => {
+                phase.completed = phase.completed || false;
+                const item = document.createElement('div');
+                item.className = `p-4 border-l-4 border-transparent cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 group ${index === 0 ? 'step-active' : ''}`;
+                item.onclick = () => selectJourneyStep(index, item);
+                item.innerHTML = `
+                    <div class="flex items-start gap-3 w-full">
+                        <div id="journey-badge-${index}" class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold group-hover:bg-accent-100 group-hover:text-accent-600 transition-colors mt-0.5">${index + 1}</div>
+                        <div class="flex-1 overflow-hidden">
+                            <h4 id="journey-title-${index}" class="font-medium text-sm text-slate-800 mb-0.5 truncate transition-colors">${phase.title.substring(phase.title.indexOf('.') + 1).trim()}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-2 w-full">${phase.desc}</p>
+                        </div>
+                        <div class="flex-shrink-0 ml-1 flex items-center h-6" onclick="event.stopPropagation()">
+                            <div class="relative flex items-center justify-center mt-1">
+                                <input type="checkbox" id="journey-list-check-${index}" onchange="toggleJourneyStep(${index})" class="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded cursor-pointer checked:bg-emerald-500 checked:border-emerald-500 transition-colors hover:border-emerald-400">
+                                <i data-lucide="check" class="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                stepper.appendChild(item);
+            });
+            updateJourneyProgress();
+            lucide.createIcons({ root: stepper });
+            selectJourneyStep(0, stepper.children[0], true);
+        }
+
+        function selectJourneyStep(index, element, skipAnimation = false) {
+            activeJourneyStep = index;
+            const stepper = document.getElementById('journey-stepper');
+            Array.from(stepper.children).forEach((child, i) => {
+                child.classList.remove('step-active');
+                const badge = document.getElementById(`journey-badge-${i}`);
+                const isCompleted = journeyPhases[i].completed;
+                if (i === index) {
+                    child.classList.add('step-active');
+                    if (!isCompleted) badge.className = "flex-shrink-0 w-6 h-6 rounded-full bg-accent-500 text-white flex items-center justify-center text-xs font-bold mt-0.5 transition-colors";
+                } else {
+                    if (!isCompleted) badge.className = "flex-shrink-0 w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold group-hover:bg-accent-100 group-hover:text-accent-600 mt-0.5 transition-colors";
+                }
+            });
+
+            const phase = journeyPhases[index];
+            const content = document.getElementById('journey-detail-content');
+            const actionContainer = document.getElementById('journey-detail-action');
+            if (!skipAnimation) { content.style.opacity = 0; actionContainer.style.opacity = 0; }
+
+            setTimeout(() => {
+                content.innerHTML = `
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-xs font-semibold mb-4 border border-brand-100">
+                        <i data-lucide="map-pin" class="w-3 h-3"></i> Fase ${index + 1} di 7
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">${phase.title}</h2>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6 text-slate-700">${phase.desc}</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1"><i data-lucide="help-circle" class="w-3 h-3"></i> Perché è importante</h4>
+                            <p class="text-sm text-slate-600 leading-relaxed">${phase.why}</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1"><i data-lucide="wrench" class="w-3 h-3"></i> Tool Richiesto</h4>
+                            <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-md shadow-sm">
+                                <i data-lucide="box" class="w-4 h-4 text-brand-500"></i>
+                                <span class="text-sm font-medium text-slate-700">${phase.tool}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mt-auto rounded-r-lg">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="lightbulb" class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-sm font-bold text-amber-800">Consiglio Pratico</h4>
+                                <p class="text-sm text-amber-700 mt-1">${phase.tips}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                const isCompleted = phase.completed;
+                actionContainer.innerHTML = `
+                    <label class="flex items-center gap-3 cursor-pointer group p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-emerald-300 transition-colors ${isCompleted ? 'bg-emerald-50 border-emerald-200' : ''}">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleJourneyStep(${index})" class="peer appearance-none w-6 h-6 border-2 border-slate-300 rounded cursor-pointer checked:bg-emerald-500 checked:border-emerald-500 transition-colors">
+                            <i data-lucide="check" class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none"></i>
+                        </div>
+                        <span class="font-medium transition-colors ${isCompleted ? 'text-emerald-700' : 'text-slate-700'} select-none">
+                            ${isCompleted ? 'Fase completata!' : 'Segna questa fase come completata'}
+                        </span>
+                    </label>
+                `;
+                lucide.createIcons({ root: content });
+                lucide.createIcons({ root: actionContainer });
+                content.style.opacity = 1;
+                actionContainer.style.opacity = 1;
+            }, skipAnimation ? 0 : 150);
+        }
+
+        function toggleJourneyStep(index) {
+            journeyPhases[index].completed = !journeyPhases[index].completed;
+            const isCompleted = journeyPhases[index].completed;
+            const badge = document.getElementById(`journey-badge-${index}`);
+            const title = document.getElementById(`journey-title-${index}`);
+            const listCheckbox = document.getElementById(`journey-list-check-${index}`);
+            if (listCheckbox) listCheckbox.checked = isCompleted;
+            if (isCompleted) {
+                badge.className = "flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5 transition-colors";
+                badge.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i>`;
+                title.classList.add('text-slate-400', 'line-through');
+                title.classList.remove('text-slate-800');
+            } else {
+                const isActive = (activeJourneyStep === index);
+                badge.className = isActive
+                    ? "flex-shrink-0 w-6 h-6 rounded-full bg-accent-500 text-white flex items-center justify-center text-xs font-bold mt-0.5 transition-colors"
+                    : "flex-shrink-0 w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold group-hover:bg-accent-100 group-hover:text-accent-600 mt-0.5 transition-colors";
+                badge.innerHTML = index + 1;
+                title.classList.remove('text-slate-400', 'line-through');
+                title.classList.add('text-slate-800');
+            }
+            lucide.createIcons({ root: badge });
+            if (activeJourneyStep === index) {
+                const actionContainer = document.getElementById('journey-detail-action');
+                const label = actionContainer.querySelector('label');
+                const span = actionContainer.querySelector('span');
+                const detailCheckbox = actionContainer.querySelector('input[type="checkbox"]');
+                if (detailCheckbox) detailCheckbox.checked = isCompleted;
+                if (isCompleted) {
+                    label.classList.add('bg-emerald-50', 'border-emerald-200');
+                    label.classList.remove('bg-slate-50', 'border-slate-200');
+                    span.classList.add('text-emerald-700');
+                    span.classList.remove('text-slate-700');
+                    span.innerText = 'Fase completata!';
+                } else {
+                    label.classList.remove('bg-emerald-50', 'border-emerald-200');
+                    label.classList.add('bg-slate-50', 'border-slate-200');
+                    span.classList.remove('text-emerald-700');
+                    span.classList.add('text-slate-700');
+                    span.innerText = 'Segna questa fase come completata';
+                }
+            }
+            updateJourneyProgress();
+        }
+
+        function updateJourneyProgress() {
+            const total = journeyPhases.length;
+            const completed = journeyPhases.filter(p => p.completed).length;
+            const pct = Math.round((completed / total) * 100);
+            document.getElementById('journey-progress-text').innerText = `${completed}/${total}`;
+            document.getElementById('journey-progress-bar').style.width = `${pct}%`;
+        }
+
+        function renderTools() {
+            const grid = document.getElementById('tools-grid');
+            toolsMap.forEach(tool => {
+                const isRequired = tool.type === 'obbligatorio';
+                const badgeColor = isRequired ? 'bg-red-100 text-red-700 border-red-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                grid.innerHTML += `
+                    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                        ${isRequired ? '<div class="absolute top-0 right-0 w-16 h-16 bg-red-50 rounded-bl-full -mr-8 -mt-8 z-0"></div>' : ''}
+                        <div class="flex justify-between items-start mb-4 relative z-10">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                    <i data-lucide="${tool.icon}" class="w-6 h-6 text-brand-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800">${tool.name}</h3>
+                                    <p class="text-xs text-slate-500">${tool.req}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${badgeColor}">${tool.type.toUpperCase()}</span>
+                        </div>
+                        <div class="relative z-10 text-sm text-slate-600"><p><strong>Ruolo:</strong> ${tool.role}</p></div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderPrompts() {
+            const acc = document.getElementById('prompt-accordion');
+            promptsDB.forEach((prompt, i) => {
+                const uniqueId = `prompt-code-${i}`;
+                acc.innerHTML += `
+                    <div class="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                        <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm md:text-base">${prompt.category}</h3>
+                                <p class="text-xs text-slate-500 mt-1">${prompt.desc}</p>
+                            </div>
+                            <button onclick="copyToClipboard('${uniqueId}')" class="flex items-center gap-2 bg-white hover:bg-brand-50 text-brand-600 border border-brand-200 text-xs font-medium px-3 py-1.5 rounded-md transition-colors shadow-sm focus:outline-none">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i> <span class="hidden md:inline">Copia Prompt</span>
+                            </button>
+                        </div>
+                        <div class="p-0 bg-[#0d1117] relative">
+                            <pre class="p-4 text-xs md:text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed" id="${uniqueId}">${prompt.code}</pre>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAgenda() {
+            const timeline = document.getElementById('agenda-timeline');
+            agendaData.forEach((item, i) => {
+                timeline.innerHTML += `
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active mb-8">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-brand-100 text-brand-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                            <span class="text-xs font-bold">${i + 1}</span>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-bold text-slate-800 text-sm md:text-base">${item.title}</h4>
+                                <span class="text-xs font-semibold text-accent-600 bg-accent-50 px-2 py-1 rounded-md">${item.time}</span>
+                            </div>
+                            <p class="text-xs text-slate-600">${item.desc}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- UTILS ---
+        function copyToClipboard(elementId) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(showToast).catch(() => fallbackCopy(textToCopy));
+            } else {
+                fallbackCopy(textToCopy);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try { document.execCommand('copy'); showToast(); } catch (err) { console.error(err); }
+            document.body.removeChild(textArea);
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+    </script>
+</body>
+</html>

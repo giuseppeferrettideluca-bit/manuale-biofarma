@@ -7,6 +7,12 @@
       "runtimeArgs": ["server.js"],
       "cwd": "backend",
       "port": 3001
+    },
+    {
+      "name": "ai-mockup-academy",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3000
     }
   ]
 }

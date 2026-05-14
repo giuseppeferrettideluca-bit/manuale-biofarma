@@ -1,0 +1,16 @@
+{
+  "name": "ai-mockup-academy",
+  "version": "1.0.0",
+  "description": "Manuale Operativo: Generare Mockup Interattivi con AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
